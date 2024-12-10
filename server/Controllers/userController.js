@@ -115,41 +115,6 @@ exports.getUsertypes = async function (req, res) {
 
 }
 
-// exports.Singleusertype = async function (req, res) {
-
-//     try {
-
-//         SingleUsertype = req.params.id
-//         console.log("SingleUsertype", SingleUsertype);
-
-//         SingleData = await Usertype.findOne({ _id: SingleUsertype });
-//         console.log("SingleUser", SingleData);
-
-//         let response = success_function({
-//             success: true,
-//             statuscode: 200,
-//             data: SingleData,
-//             message: "successfully get the single data.."
-//         })
-//         res.status(response.statuscode).send(response)
-//         return;
-
-//     } catch (error) {
-
-//         console.log("error : ", error);
-//         let response = error_function({
-//             success: false,
-//             statuscode: 400,
-
-//             message: "error"
-//         })
-//         res.status(response.statuscode).send(response)
-//         return;
-//     }
-
-
-// }
-
 exports.soloUser = async function (req, res) {
 
     try {
@@ -251,25 +216,26 @@ exports.fetchingGender = async function (req, res) {
 exports.addProducts = async (req, res) => {
     try {
         const body = req.body;
+        let userId = req.params.id
 
         // Fetch related data
         const category = await Categories.findOne({ category: body.category });
-        console.log("category",category)
+        console.log("category", category)
 
         let category_id = category._id;
-        console.log("category_id",category_id);
-        body.category=category_id
+        console.log("category_id", category_id);
+        body.category = category_id
 
 
 
         const gender = await Gender.findOne({ gender: body.gender });
-        console.log("gender",gender)
+        console.log("gender", gender)
 
         let gender_id = gender._id;
-        console.log("gender_id",gender_id);
-        body.gender=gender_id
+        console.log("gender_id", gender_id);
+        body.gender = gender_id
 
-        
+
 
         // Log the uploaded files to debug
         console.log("Uploaded Files:", req.files);  // Should show the files
@@ -279,10 +245,23 @@ exports.addProducts = async (req, res) => {
             url: file.path,  // Store the file path
             alt: req.body.altText || 'Product Image',  // Optional alt text
         }));
-        body.images =images
+        body.images = images
+
+        let data = {
+            title: body.title,
+            description: body.description,
+            price: body.price,
+            category: body.category,
+            gender: body.gender,
+            brand: body.brand,
+            stock: body.stock,
+            images: body.images,
+            rating: body.rating,
+            userId
+        }
 
 
-        const productData = await AddData.create(body);
+        const productData = await AddData.create(data);
         console.log(productData);
         res.status(200).send({ success: true, message: 'Product successfully added.', data: productData });
     } catch (error) {
@@ -291,11 +270,9 @@ exports.addProducts = async (req, res) => {
     }
 };
 
-exports.viewAllProducts = async (req, res) => {
+exports.allProducts = async (req, res) => {
+
     try {
-
-
-
         let productOverview = await AddData.find().populate('category').populate('gender');
 
         let response = success_function({
@@ -323,19 +300,48 @@ exports.viewAllProducts = async (req, res) => {
     }
 }
 
-exports.SingleProductList = async (req, res) => {
+exports.viewAllProducts = async (req, res) => {
     try {
-      
-        Singleid = req.params.id
-        console.log("Singleid",Singleid);
+        // Assuming the seller's ID is available in req.user or req.seller (via middleware)
+        const loggedInSellerId = req.params.id
+        // Fetch products added by other sellers only
+        let productOverview = await AddData.find({ userId: { $ne: loggedInSellerId } })
+            .populate('category')
+            .populate('gender');
+        console.log("Logged-in seller ID:", loggedInSellerId);
 
-        SingleData = await AddData.findOne({_id :Singleid});
-        console.log("SingleUser",SingleData);
 
         let response = success_function({
             success: true,
             statuscode: 200,
-            data : SingleData,
+            data: productOverview,
+            message: "Products fetched successfully.",
+        });
+        res.status(response.statuscode).send(response);
+    } catch (error) {
+        console.log("error: ", error);
+        let response = error_function({
+            success: false,
+            statuscode: 400,
+            message: "Error fetching products",
+        });
+        res.status(response.statuscode).send(response);
+    }
+};
+
+exports.SingleProductList = async (req, res) => {
+    try {
+
+        Singleid = req.params.id
+        console.log("Singleid", Singleid);
+
+        SingleData = await AddData.findOne({ _id: Singleid });
+        console.log("SingleUser", SingleData);
+
+        let response = success_function({
+            success: true,
+            statuscode: 200,
+            data: SingleData,
             message: "successfully get the single data.."
         })
         res.status(response.statuscode).send(response)
@@ -357,7 +363,7 @@ exports.SingleProductList = async (req, res) => {
 
 exports.addToCart = async (req, res) => {
     try {
-        const { userId, productId, quantity } = req.body;
+        const { userId, productId, quantity, increment } = req.body;
 
         // Validate quantity
         if (!quantity || quantity < 1) {
@@ -406,13 +412,14 @@ exports.addToCart = async (req, res) => {
         const existingProductIndex = cart.items.findIndex(item => item.productId?.toString() === productId);
 
         if (existingProductIndex !== -1) {
-            // Update quantity and price if product exists
-            cart.items[existingProductIndex].quantity += quantity;
+            // Update quantity only if "increment" is true
+            if (increment) {
+                cart.items[existingProductIndex].quantity += quantity;
+            }
         } else {
             // Add the new product to the cart
             cart.items.push({ productId, quantity, price });
         }
-        console.log(existingProductIndex)
 
         // Recalculate the cart's total price
         cart.totalPrice = cart.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
@@ -435,6 +442,96 @@ exports.addToCart = async (req, res) => {
             message: "Internal server error"
         });
         res.status(response.statuscode).send(response);
+    }
+};
+
+exports.CartView = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Fetch the user's cart, populate product details
+        const user = await users.findById(userId).populate('cart.productId');
+
+        if (!user) {
+            let response = error_function({
+                success: false,
+                statuscode: 404,
+                message: "User not found!",
+            });
+            return res.status(response.statuscode).send(response);
+        }
+
+        const cart = user.addCart[0]; // Assuming one cart per user
+        if (!cart || cart.items.length === 0) {
+            let response = success_function({
+                success: true,
+                statuscode: 200,
+                data: [],
+                message: "Cart is empty.",
+            });
+            return res.status(response.statuscode).send(response);
+        }
+
+        let response = success_function({
+            success: true,
+            statuscode: 200,
+            data: cart,
+            message: "Cart items fetched successfully.",
+        });
+        res.status(response.statuscode).send(response);
+    } catch (error) {
+        console.error("Error in cartView: ", error);
+        let response = error_function({
+            success: false,
+            statuscode: 500,
+            message: "Error fetching cart items.",
+        });
+        res.status(response.statuscode).send(response);
+    }
+};
+
+exports.updateCart = async (req, res) => {
+    try {
+        const { productId, newQuantity } = req.body;
+        const userId  = req.params.id;  // Extract userId from params
+
+        // Validate the quantity
+        if (newQuantity <= 0) {
+            return res.status(400).json({ success: false, message: "Quantity must be greater than zero." });
+        }
+
+        // Find the user by userId
+        const user = await users.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found!" });
+        }
+
+        // Assuming the cart is stored in user.addCart[0]
+        const cart = user.addCart && user.addCart[0];
+        if (!cart) {
+            return res.status(400).json({ success: false, message: "Cart is empty!" });
+        }
+
+        // Find the product index in the cart
+        const productIndex = cart.items.findIndex(item => item.productId.toString() === productId);
+        if (productIndex === -1) {
+            return res.status(404).json({ success: false, message: "Product not found in cart!" });
+        }
+
+        // Update the quantity of the product
+        cart.items[productIndex].quantity = newQuantity;
+
+        // Recalculate the total price (ensure the price is stored for each product)
+        cart.totalPrice = cart.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+        // Save the updated cart back to the user's addCart array (ensure addCart is updated)
+        await user.save();
+
+        // Respond with the updated cart
+        res.status(200).json({ success: true, message: "Cart updated successfully.", cart });
+    } catch (error) {
+        console.error("Error updating cart:", error);
+        res.status(500).json({ success: false, message: "Internal server error." });
     }
 };
 
@@ -464,83 +561,173 @@ exports.CartView = async (req, res) => {
     }
 };
 
+// exports.addWishList = async (req, res) => {
+//     try {
+//         const { userId, productId, title, price, } = req.body;
+
+//         // Fetch the user
+//         const user = await users.findById(userId);
+//         if (!user) {
+//             return res.status(404).send({
+//                 success: false,
+//                 statuscode: 404,
+//                 message: "User not found!",
+//             });
+//         }
+
+//         // Fetch the product
+//         const product = await AddData.findById(productId).lean();
+//         if (!product) {
+//             return res.status(404).send({
+//                 success: false,
+//                 statuscode: 404,
+//                 message: "Product not found!",
+//             });
+//         }
+
+//         // Log current wishlist for debugging
+//         console.log("Wishlist Before:", user.wishlist);
+
+//         // Use atomic operation to avoid race conditions
+//         const updatedUser = await users.findOneAndUpdate(
+//             {
+//                 _id: userId,
+//                 "wishlist.productId": { $ne: productId }, // Ensure product is not already in wishlist
+//             },
+//             {
+//                 $push: {
+//                     wishlist: {
+//                         productId,
+//                         title: product.title || title,
+//                         price: product.price || price,
+//                     },
+//                 },
+//             },
+//             { new: true } // Return updated user
+//         );
+
+//         // Check if product was added or already exists
+//         if (!updatedUser) {
+//             return res.status(400).send({
+//                 success: false,
+//                 statuscode: 400,
+//                 message: "Product already in wishlist!",
+//             });
+//         }
+
+//         // Log updated wishlist for debugging
+//         console.log("Wishlist After:", updatedUser.wishlist);
+
+//         // Send success response
+//         return res.status(200).send({
+//             success: true,
+//             statuscode: 200,
+//             data: {
+//                 productId,
+//                 title: product.title || title,
+//                 price: product.price || price,
+//             },
+//             message: "Item successfully added to the wishlist.",
+//         });
+//     } catch (error) {
+//         console.error("Error:", error);
+//         return res.status(500).send({
+//             success: false,
+//             statuscode: 500,
+//             message: "Internal server error",
+//         });
+//     }
+// };
+
+
+
 exports.addWishList = async (req, res) => {
     try {
-        const { userId, productId, title, price,} = req.body;
+        const { userId, productId } = req.body;
 
         // Fetch the user
         const user = await users.findById(userId);
         if (!user) {
-            return res.status(404).send({
+            return res.status(404).json({
                 success: false,
-                statuscode: 404,
                 message: "User not found!",
             });
         }
 
         // Fetch the product
-        const product = await AddData.findById(productId).lean();
+        const product = await AddData.findById(productId);
         if (!product) {
-            return res.status(404).send({
+            return res.status(404).json({
                 success: false,
-                statuscode: 404,
                 message: "Product not found!",
             });
         }
 
-        // Log current wishlist for debugging
-        console.log("Wishlist Before:", user.wishlist);
+        // Check if the product is already in the wishlist
+        const existingWishlistItem = user.wishlist.find(item => item.productId === productId);
 
-        // Use atomic operation to avoid race conditions
-        const updatedUser = await users.findOneAndUpdate(
-            { 
-                _id: userId, 
-                "wishlist.productId": { $ne: productId }, // Ensure product is not already in wishlist
-            },
-            { 
-                $push: { 
-                    wishlist: { 
-                        productId, 
-                        title: product.title || title, 
-                        price: product.price || price, 
-                    },
-                },
-            },
-            { new: true } // Return updated user
-        );
-
-        // Check if product was added or already exists
-        if (!updatedUser) {
-            return res.status(400).send({
+        if (existingWishlistItem && existingWishlistItem.isInWishlist) {
+            return res.status(400).json({
                 success: false,
-                statuscode: 400,
                 message: "Product already in wishlist!",
             });
         }
 
-        // Log updated wishlist for debugging
-        console.log("Wishlist After:", updatedUser.wishlist);
+        // Add or update the wishlist item
+        if (existingWishlistItem) {
+            existingWishlistItem.isInWishlist = true;
+        } else {
+            user.wishlist.push({
+                productId,
+                title: product.title,
+                price: product.price,
+                isInWishlist: true,
+            });
+        }
 
-        // Send success response
-        return res.status(200).send({
+        await user.save();
+
+        return res.status(200).json({
             success: true,
-            statuscode: 200,
-            data: {
-                productId, 
-                title: product.title || title, 
-                price: product.price || price,
-            },
             message: "Item successfully added to the wishlist.",
         });
     } catch (error) {
-        console.error("Error:", error);
-        return res.status(500).send({
+        console.error("Error adding to wishlist:", error);
+        res.status(500).json({
             success: false,
-            statuscode: 500,
-            message: "Internal server error",
+            message: "Internal server error.",
         });
     }
 };
+
+exports.checkWishlistStatus = async (req, res) => {
+    try {
+        const { userId, productId } = req.query;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found!",
+            });
+        }
+
+        const wishlistItem = user.wishlist.find(item => item.productId === productId);
+
+        res.status(200).json({
+            success: true,
+            isInWishlist: wishlistItem?.isInWishlist || false,
+        });
+    } catch (error) {
+        console.error("Error checking wishlist status:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+        });
+    }
+};
+
+
 
 exports.addAddress = async (req, res) => {
     try {
@@ -576,7 +763,7 @@ exports.addAddress = async (req, res) => {
 exports.loadWishList = async (req, res) => {
     try {
         // Extract userId from request (e.g., query parameters, body, or headers)
-        const  userId  = req.params.id; // Assuming userId is passed as a query parameter
+        const userId = req.params.id; // Assuming userId is passed as a query parameter
 
         // Validate userId
         if (!userId) {
@@ -614,14 +801,14 @@ exports.loadWishList = async (req, res) => {
     }
 };
 
-exports.AddressLoad =async (req, res) => {
+exports.AddressLoad = async (req, res) => {
 
     try {
         // Extract userId from request (e.g., query parameters, body, or headers)
-        const  userId  = req.params.id; // Assuming userId is passed as a query parameter
+        const id = req.params.id; // Assuming userId is passed as a query parameter
 
         // Validate userId
-        if (!userId) {
+        if (!id) {
             return res.status(400).json({
                 success: false,
                 message: "User ID is required",
@@ -629,7 +816,7 @@ exports.AddressLoad =async (req, res) => {
         }
 
         // Fetch the user's wishlist
-        const user = await users.findById(userId, 'address'); // Fetch only the 'wishlist' field
+        const user = await users.findById(id, 'address'); // Fetch only the 'wishlist' field
 
         if (!user) {
             return res.status(404).json({
@@ -656,3 +843,332 @@ exports.AddressLoad =async (req, res) => {
     }
 
 }
+
+exports.removeFromCart = async (req, res) => {
+    try {
+        const { userId, productId } = req.params;
+
+        const user = await users.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found!" });
+        }
+
+        const cart = user.addCart[0];
+        if (!cart) {
+            return res.status(400).json({ success: false, message: "Cart is empty!" });
+        }
+
+        const productIndex = cart.items.findIndex(item => item.productId.toString() === productId);
+        if (productIndex === -1) {
+            return res.status(404).json({ success: false, message: "Product not found in the cart!" });
+        }
+
+        cart.items.splice(productIndex, 1); // Remove product from cart
+
+        // Recalculate total price
+        cart.totalPrice = cart.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+        
+        await user.save();
+        res.status(200).json({ success: true, message: "Product removed from cart.", cart });
+    } catch (error) {
+        console.error("Error removing from cart:", error);
+        res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
+
+exports.ProductMart = async (req, res) => {
+    try {
+        // Get the logged-in seller's ID from the request parameters
+        const loggedInSellerId = req.params.id; // Or req.user.id if using middleware
+
+        // Fetch products added by the logged-in seller only
+        const productOverview = await AddData.find({ userId: loggedInSellerId })
+
+
+        console.log("Logged-in seller ID:", loggedInSellerId);
+
+        // Success response
+        const response = success_function({
+            success: true,
+            statuscode: 200,
+            data: productOverview,
+            message: "Products fetched successfully.",
+        });
+        res.status(response.statuscode).send(response);
+    } catch (error) {
+        console.log("Error:", error);
+
+        // Error response
+        const response = error_function({
+            success: false,
+            statuscode: 400,
+            message: "Error fetching products",
+        });
+        res.status(response.statuscode).send(response);
+    }
+
+}
+
+exports.DeleteProduct = async (req, res) => {
+
+
+    try {
+        DeleteId = req.params.id
+        console.log("DeleteId", DeleteId);
+
+        deleteData = await AddData.deleteOne({ _id: DeleteId });
+        console.log("deleteData", deleteData);
+
+        let response = success_function({
+            success: true,
+            statuscode: 200,
+            message: "successfully deleted.."
+        })
+        res.status(response.statuscode).send(response)
+        return;
+
+    } catch (error) {
+
+        console.log("error : ", error);
+        let response = error_function({
+            success: false,
+            statuscode: 400,
+            message: "error"
+        })
+        res.status(response.statuscode).send(response)
+        return;
+
+    }
+}
+
+exports.productupdation = async (req, res) => {
+    try {
+        let body = req.body;
+        console.log("Request Body:", body);
+
+        // Validate body data
+        if (!body.title || !body.price || !body.category || !body.gender) {
+            throw new Error("Missing required fields: title, price, category, or gender.");
+        }
+
+        // Find category by name
+        const category = await Categories.findOne({ category: body.category });
+        if (!category) throw new Error(`Category "${body.category}" not found.`);
+        body.category = category._id;
+
+        // Find gender by name
+        const gender = await Gender.findOne({ gender: body.gender });
+        if (!gender) throw new Error(`Gender "${body.gender}" not found.`);
+        body.gender = gender._id;
+
+        // Prepare the update object
+        let data = {
+            title: body.title,
+            description: body.description,
+            price: body.price,
+            category: body.category,
+            gender: body.gender,
+            brand: body.brand,
+            stock: body.stock
+        };
+
+        // Handle images update explicitly
+        if (body.images && Array.isArray(body.images) && body.images.length > 0) {
+            data.images = body.images;
+        }
+
+        // Get the update ID from request params
+        let updateId = req.params.id;
+        if (!updateId) throw new Error("Update ID is missing.");
+
+        console.log("Update ID:", updateId);
+
+        // Check if the document exists
+        const existingDocument = await AddData.findById(updateId);
+        if (!existingDocument) {
+            throw new Error("Document not found with the provided ID.");
+        }
+
+        // Check for changes in the data
+        if (JSON.stringify(existingDocument) === JSON.stringify(data)) {
+            throw new Error("No changes detected in the provided data.");
+        }
+
+        // Perform the update
+        let update_employee = await AddData.updateOne(
+            { _id: updateId },
+            { $set: data }
+        );
+
+        if (update_employee.matchedCount === 0) {
+            throw new Error("No document found with the provided ID.");
+        }
+
+        if (update_employee.modifiedCount === 0) {
+            throw new Error("No changes detected in the document.");
+        }
+
+        console.log("Update Result:", update_employee);
+
+        // Send success response
+        let response = success_function({
+            success: true,
+            statuscode: 200,
+            data: update_employee,
+            message: "Successfully updated."
+        });
+        res.status(response.statuscode).send(response);
+
+    } catch (error) {
+        console.error("Update Error:", error.message);
+
+        // Send error response
+        let response = error_function({
+            success: false,
+            statuscode: 400,
+            message: error.message,
+            data: null
+        });
+        res.status(response.statuscode).send(response);
+    }
+};
+
+exports.buyNow = async (req, res) => {
+    try {
+        const { id: userId } = req.params; // Extract userId from params
+        const products = req.body.products; // Array of products (productId, quantity)
+
+        // Debugging logs
+        console.log('Params:', req.params);
+        console.log('Body:', req.body);
+
+        // Validate inputs
+        // if (!userId || !products || !Array.isArray(products) || products.length === 0) {
+        //     return res.status(400).json({ message: 'User ID and a list of products with quantities are required.' });
+        // }
+
+        // Fetch the user
+        const user = await users.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        // Initialize variables for total order price and purchased products
+        let totalOrderPrice = 0;
+        let purchasedProducts = [];
+
+        // Loop through each product in the order
+        for (let productData of products) {
+            const { productId, quantity } = productData;
+
+            // Validate product data
+            if (!productId || !quantity) {
+                return res.status(400).json({ message: 'Each product must have a valid Product ID and Quantity.' });
+            }
+
+            // Fetch the product
+            const product = await AddData.findById(productId);
+            if (!product) {
+                return res.status(404).json({ message: `Product with ID ${productId} not found.` });
+            }
+
+            // Check if enough stock is available
+            if (product.stock < quantity) {
+                return res.status(400).json({ message: `Insufficient stock for ${product.name}. Only ${product.stock} items available.` });
+            }
+
+            // Calculate total price for the product
+            const productTotalPrice = product.price * quantity;
+            totalOrderPrice += productTotalPrice;
+
+            // Update stock
+            product.stock -= quantity;
+            await product.save();
+
+            // Add product details to the purchased list
+            purchasedProducts.push({
+                productId: product._id,
+                quantity,
+                price: productTotalPrice,
+                purchaseDate: new Date(),
+            });
+        }
+
+        // Update the user's buyNow field
+        user.buyNow = {
+            products: purchasedProducts,
+            totalPrice: totalOrderPrice,
+            purchaseDate: new Date(),
+        };
+
+        await user.save();
+
+        // Respond with success
+        res.status(200).json({
+            message: 'Bulk purchase successful.',
+            buyNow: user.buyNow,
+            totalPrice: totalOrderPrice,
+            purchasedProducts: purchasedProducts,
+        });
+    } catch (error) {
+        console.error('Error in buyNow:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+};
+
+
+
+
+
+
+
+
+exports.fetchMensglass = async (req, res) => {
+    try {
+        // Find the ObjectId for 'Men' in the Gender collection
+        const gender = await Gender.findOne({ gender: "Men" });
+        if (!gender) {
+            return res.status(404).json({
+                success: false,
+                message: "Gender 'Men' not found."
+            });
+        }
+
+        // Find the ObjectId for 'Sunglasses' in the Category collection
+        const category = await Categories.findOne({ category: "Sunglasses" });
+        if (!category) {
+            return res.status(404).json({
+                success: false,
+                message: "Category 'Sunglasses' not found."
+            });
+        }
+
+        // Query the products with the ObjectId for gender and category
+        const productOverview = await AddData.find({
+            category: category._id, // Use the ObjectId from the Category collection
+            gender: gender._id      // Use the ObjectId from the Gender collection
+        })
+        .populate('category')
+        .populate('gender');
+
+        res.status(200).json({
+            success: true,
+            statusCode: 200,
+            data: productOverview,
+            message: "Men's sunglasses successfully fetched."
+        });
+        return;
+
+    } catch (error) {
+        console.error("Error:", error);
+
+        res.status(400).json({
+            success: false,
+            statusCode: 400,
+            message: "Error fetching men's sunglasses",
+            error: error.message
+        });
+        return;
+    }
+};
+

@@ -640,3 +640,18 @@
     opacity: 0;
   }
 }
+.offcanvas-menu {
+  display: none;
+  position: absolute;
+  top: 100%; /* Align below the hover element */
+  left: 0;
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 300px; /* Adjust width as necessary */
+  z-index: 1000;
+}
+
+.offcanvas-menu.active {
+  display: block; /* Show on hover */
+}
+

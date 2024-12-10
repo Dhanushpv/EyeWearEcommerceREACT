@@ -1,4 +1,5 @@
 
+
 const mongoose = require('mongoose');
 
 const users = new mongoose.Schema({
@@ -53,7 +54,6 @@ const users = new mongoose.Schema({
             },
         }
     ],
-    
     addCart: [
         {
             items: [
@@ -103,8 +103,41 @@ const users = new mongoose.Schema({
                 type: Date, // Timestamp when the product was added to the wishlist
                 default: Date.now,
             },
+            isInWishlist: {
+                type: Boolean,
+                default: true, // Set true when added to the wishlist
+            },
         }
     ],
+    buyNow: {
+        products: [
+            {
+                productId: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'products', // Reference to the Product collection
+                },
+                quantity: {
+                    type: Number,
+                    min: 1,
+                },
+                price: {
+                    type: Number,
+                },
+                purchaseDate: {
+                    type: Date,
+                    default: Date.now,
+                },
+            }
+        ],
+        totalPrice: {
+            type: Number,
+        },
+        purchaseDate: {
+            type: Date,
+            default: Date.now,
+        },
+    }
+    
 });
 
 module.exports = mongoose.model("users", users);

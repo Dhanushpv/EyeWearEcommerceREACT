@@ -1,0 +1,8 @@
+#upload-message {
+  max-height: 200px; /* Set a maximum height */
+  overflow-y: auto; /* Enable vertical scrolling if content overflows */
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap; /* Arrange images in rows */
+  
+}
