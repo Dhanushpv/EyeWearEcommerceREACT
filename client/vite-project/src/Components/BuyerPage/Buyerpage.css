@@ -4,18 +4,6 @@
 
 
 
-*_{
-    padding: 0px;
-    margin: 0px;
-}
-
-/* body{
-    background-image: url("./images/19336199_6078269.jpg");
-
-    background-repeat: no-repeat;
-    background-size: cover;
-} */
-
 .input {
     max-width: 190px;
     background-color: #f5f5f5;
@@ -641,17 +629,5 @@
   }
 }
 .offcanvas-menu {
-  display: none;
-  position: absolute;
-  top: 100%; /* Align below the hover element */
-  left: 0;
-  background-color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 300px; /* Adjust width as necessary */
-  z-index: 1000;
+  z-index: 9999;
 }
-
-.offcanvas-menu.active {
-  display: block; /* Show on hover */
-}
-

@@ -561,86 +561,6 @@ exports.CartView = async (req, res) => {
     }
 };
 
-// exports.addWishList = async (req, res) => {
-//     try {
-//         const { userId, productId, title, price, } = req.body;
-
-//         // Fetch the user
-//         const user = await users.findById(userId);
-//         if (!user) {
-//             return res.status(404).send({
-//                 success: false,
-//                 statuscode: 404,
-//                 message: "User not found!",
-//             });
-//         }
-
-//         // Fetch the product
-//         const product = await AddData.findById(productId).lean();
-//         if (!product) {
-//             return res.status(404).send({
-//                 success: false,
-//                 statuscode: 404,
-//                 message: "Product not found!",
-//             });
-//         }
-
-//         // Log current wishlist for debugging
-//         console.log("Wishlist Before:", user.wishlist);
-
-//         // Use atomic operation to avoid race conditions
-//         const updatedUser = await users.findOneAndUpdate(
-//             {
-//                 _id: userId,
-//                 "wishlist.productId": { $ne: productId }, // Ensure product is not already in wishlist
-//             },
-//             {
-//                 $push: {
-//                     wishlist: {
-//                         productId,
-//                         title: product.title || title,
-//                         price: product.price || price,
-//                     },
-//                 },
-//             },
-//             { new: true } // Return updated user
-//         );
-
-//         // Check if product was added or already exists
-//         if (!updatedUser) {
-//             return res.status(400).send({
-//                 success: false,
-//                 statuscode: 400,
-//                 message: "Product already in wishlist!",
-//             });
-//         }
-
-//         // Log updated wishlist for debugging
-//         console.log("Wishlist After:", updatedUser.wishlist);
-
-//         // Send success response
-//         return res.status(200).send({
-//             success: true,
-//             statuscode: 200,
-//             data: {
-//                 productId,
-//                 title: product.title || title,
-//                 price: product.price || price,
-//             },
-//             message: "Item successfully added to the wishlist.",
-//         });
-//     } catch (error) {
-//         console.error("Error:", error);
-//         return res.status(500).send({
-//             success: false,
-//             statuscode: 500,
-//             message: "Internal server error",
-//         });
-//     }
-// };
-
-
-
 exports.addWishList = async (req, res) => {
     try {
         const { userId, productId } = req.body;
@@ -704,7 +624,7 @@ exports.checkWishlistStatus = async (req, res) => {
     try {
         const { userId, productId } = req.query;
 
-        const user = await User.findById(userId);
+        const user = await users.findById(userId);
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -726,8 +646,6 @@ exports.checkWishlistStatus = async (req, res) => {
         });
     }
 };
-
-
 
 exports.addAddress = async (req, res) => {
     try {
@@ -1033,6 +951,10 @@ exports.productupdation = async (req, res) => {
     }
 };
 
+
+
+
+
 exports.buyNow = async (req, res) => {
     try {
         const { id: userId } = req.params; // Extract userId from params
@@ -1043,9 +965,9 @@ exports.buyNow = async (req, res) => {
         console.log('Body:', req.body);
 
         // Validate inputs
-        // if (!userId || !products || !Array.isArray(products) || products.length === 0) {
-        //     return res.status(400).json({ message: 'User ID and a list of products with quantities are required.' });
-        // }
+        if (!userId || !products || !Array.isArray(products) || products.length === 0) {
+            return res.status(400).json({ message: 'User ID and a list of products with quantities are required.' });
+        }
 
         // Fetch the user
         const user = await users.findById(userId);
@@ -1094,12 +1016,20 @@ exports.buyNow = async (req, res) => {
             });
         }
 
-        // Update the user's buyNow field
-        user.buyNow = {
-            products: purchasedProducts,
-            totalPrice: totalOrderPrice,
-            purchaseDate: new Date(),
-        };
+        // Check if user already has a buyNow field, and update it
+        if (user.buyNow) {
+            // Append the new products to the existing array in buyNow
+            user.buyNow.products.push(...purchasedProducts);
+            user.buyNow.totalPrice += totalOrderPrice; // Update the total price
+            user.buyNow.purchaseDate = new Date(); // Update the purchase date
+        } else {
+            // If the user doesn't have a buyNow field, create one
+            user.buyNow = {
+                products: purchasedProducts,
+                totalPrice: totalOrderPrice,
+                purchaseDate: new Date(),
+            };
+        }
 
         await user.save();
 
@@ -1107,7 +1037,7 @@ exports.buyNow = async (req, res) => {
         res.status(200).json({
             message: 'Bulk purchase successful.',
             buyNow: user.buyNow,
-            totalPrice: totalOrderPrice,
+            totalPrice: user.buyNow.totalPrice,
             purchasedProducts: purchasedProducts,
         });
     } catch (error) {
@@ -1115,8 +1045,6 @@ exports.buyNow = async (req, res) => {
         res.status(500).json({ message: 'Internal server error.' });
     }
 };
-
-
 
 
 
@@ -1169,6 +1097,88 @@ exports.fetchMensglass = async (req, res) => {
             error: error.message
         });
         return;
+    }
+};
+
+exports.searchProducts = async (req, res) => {
+    const { q } = req.params; // Extract route parameter
+
+    try {
+        const products = await AddData.find({
+            $or: [
+                { title: { $regex: q, $options: 'i' } },
+                { description: { $regex: q, $options: 'i' } }
+            ]
+        });
+
+        res.json(products);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+exports.bestseller = async (req, res) =>{
+
+    try {
+        const bestSeller = await users.aggregate([
+          { $unwind: '$addCart' }, // Unwind the addCart array
+          { $unwind: '$addCart.items' }, // Unwind the items array inside addCart
+          {
+            $group: {
+              _id: '$addCart.items.productId', // Group by productId
+              totalQuantity: { $sum: '$addCart.items.quantity' }, // Sum the quantities
+            },
+          },
+          { $sort: { totalQuantity: -1 } }, // Sort by totalQuantity in descending order
+          { $limit: 1 }, // Limit to the top product
+        ]);
+    
+        if (bestSeller.length === 0) {
+          return res.status(404).json({ message: 'No sales data available.' });
+        }
+    
+        // Populate product details from the Products collection
+        const productDetails = await AddData.findById(bestSeller[0]._id).select(
+          'name price images description'
+        );
+    
+        if (!productDetails) {
+          return res.status(404).json({ message: 'Product not found.' });
+        }
+    
+        res.status(200).json({
+          productId: bestSeller[0]._id,
+          totalQuantity: bestSeller[0].totalQuantity,
+          productName: productDetails.name,
+          price: productDetails.price,
+          images: productDetails.images,
+          description: productDetails.description,
+        });
+      } catch (error) {
+        console.error('Error fetching best seller:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+}
+
+exports.totaluser = async (req, res) =>{
+    try {
+        // Count the number of users in the User collection
+        const userCount = await users.countDocuments({});
+        res.json({ totalUsers: userCount });
+    } catch (error) {
+        console.error('Error counting users:', error);
+        res.status(500).json({ error: 'An error occurred while counting users' });
+    }
+}
+
+exports.totalBuyers = async (req, res) => {
+    try {
+        // Count the number of users with role 'buyer'
+        const buyerCount = await users.countDocuments({ role: 'Buyer' });
+        res.json({ totalBuyers: buyerCount });
+    } catch (error) {
+        console.error('Error counting buyers:', error);
+        res.status(500).json({ error: 'An error occurred while counting buyers' });
     }
 };
 

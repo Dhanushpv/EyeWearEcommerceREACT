@@ -10,9 +10,11 @@ function BuyerPage() {
     const [productList, setProductList] = useState([]);
     const [error, setError] = useState("");
     const [mensGlasses, setMensGlasses] = useState([]);
-    const [isHovering, setIsHovering] = useState(false);
-    const [lastThreeGlasses, setLastAddedGlasses] = useState([]);
+    const [filteredProducts, setFilteredProducts] = useState([]);
     const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isCanvasOpen, setIsCanvasOpen] = useState(false);
+
 
 
     useEffect(() => {
@@ -85,8 +87,8 @@ function BuyerPage() {
             }
 
             const productResponse = await axios.get("http://localhost:3000/allProducts");
-            setProductList(productResponse.data.data);
-        } catch (err) {
+            setProductList(productResponse.data.data); // Store all products
+            setFilteredProducts(productResponse.data.data);         } catch (err) {
             setError("Unable to load product details. Please try again later.");
             console.error("Error fetching product details:", err);
         }
@@ -130,23 +132,193 @@ function BuyerPage() {
         navigate(`/AddtoCartPage?productId=${productId}&userId=${userId}&price=${price}&quantity=${quantity}`);
     };
 
-    const fetchLastThreeGlasses = async () => {
+    const handleMouseEnter = async () => {
         try {
-          const response = await axios.get("http://localhost:3000/fetchMensglass");
-          setLastAddedGlasses(response.data.data.slice(-3)); // Fetch the last three items
+            const response = await axios.get("http://localhost:3000/fetchMensglass");
+            const lastThreeGlasses = response.data.data.slice(-3); // Get the last three items
+    
+            // Update the screenglasses container dynamically
+            const screenglassesContainer = document.getElementById("screenglasses");
+
+            screenglassesContainer.innerHTML = ""; // Clear previous content
+    
+            lastThreeGlasses.forEach((glass) => {
+                const glassElement = document.createElement("div");
+                glassElement.className = "flex items-center gap-3 mb-3";
+    
+                const imageUrl = glass.images[2]?.url?.replace(/\\/g, "/");
+                glassElement.innerHTML = `
+                
+                    <img
+                        src="http://localhost:3000/${imageUrl}"
+                        alt="${glass.images[0]?.alt || "Glass"}"
+                        class="h-25 w-25 rounded-md"
+                    />
+                    <div >
+                        <h4 class="font-semibold" >${glass.title}</h4>
+                        <p class="text-sm text-gray-500">₹${glass.price}</p>
+                    </div>
+                `;
+                screenglassesContainer.appendChild(glassElement);
+            });
         } catch (err) {
-          console.error("Error fetching last added glasses:", err);
+            console.error("Error fetching last added glasses:", err);
         }
-      };
+
+
+        try {
+            const response = await axios.get("http://localhost:3000/fetchMensglass");
+            const lastThreeGlasses = response.data.data.slice(-3); // Get the last three items
     
-      const handleMouseEnter = () => {
-        setIsHovering(true);
-        fetchLastThreeGlasses();
-      };
+            // Update the screenglasses container dynamically
+            const screenglassesContainer = document.getElementById("kidsGlasses");
+
+            screenglassesContainer.innerHTML = ""; // Clear previous content
     
-      const handleMouseLeave = () => {
+            lastThreeGlasses.forEach((glass) => {
+                const glassElement = document.createElement("div");
+                glassElement.className = "flex items-center gap-3 mb-3";
+    
+                const imageUrl = glass.images[2]?.url?.replace(/\\/g, "/");
+                glassElement.innerHTML = `
+                
+                    <img
+                        src="http://localhost:3000/${imageUrl}"
+                        alt="${glass.images[0]?.alt || "Glass"}"
+                        class="h-25 w-25 rounded-md"
+                    />
+                    <div >
+                        <h4 class="font-semibold" >${glass.title}</h4>
+                        <p class="text-sm text-gray-500">₹${glass.price}</p>
+                    </div>
+                `;
+                screenglassesContainer.appendChild(glassElement);
+            });
+        } catch (err) {
+            console.error("Error fetching last added glasses:", err);
+        }
+
+        try {
+            const response = await axios.get("http://localhost:3000/fetchMensglass");
+            const lastThreeGlasses = response.data.data.slice(-3); // Get the last three items
+    
+            // Update the screenglasses container dynamically
+            const screenglassesContainer = document.getElementById("ContactLenses");
+
+            screenglassesContainer.innerHTML = ""; // Clear previous content
+    
+            lastThreeGlasses.forEach((glass) => {
+                const glassElement = document.createElement("div");
+                glassElement.className = "flex items-center gap-3 mb-3";
+    
+                const imageUrl = glass.images[2]?.url?.replace(/\\/g, "/");
+                glassElement.innerHTML = `
+                
+                    <img
+                        src="http://localhost:3000/${imageUrl}"
+                        alt="${glass.images[0]?.alt || "Glass"}"
+                        class="h-25 w-25 rounded-md"
+                    />
+                    <div >
+                        <h4 class="font-semibold" >${glass.title}</h4>
+                        <p class="text-sm text-gray-500">₹${glass.price}</p>
+                    </div>
+                `;
+                screenglassesContainer.appendChild(glassElement);
+            });
+        } catch (err) {
+            console.error("Error fetching last added glasses:", err);
+        }
+
+        try {
+            const response = await axios.get("http://localhost:3000/fetchMensglass");
+            const lastThreeGlasses = response.data.data.slice(-3); // Get the last three items
+    
+            // Update the screenglasses container dynamically
+            const screenglassesContainer = document.getElementById("Sunglasses");
+
+            screenglassesContainer.innerHTML = ""; // Clear previous content
+    
+            lastThreeGlasses.forEach((glass) => {
+                const glassElement = document.createElement("div");
+                glassElement.className = "flex items-center gap-3 mb-3";
+    
+                const imageUrl = glass.images[2]?.url?.replace(/\\/g, "/");
+                glassElement.innerHTML = `
+                
+                    <img
+                        src="http://localhost:3000/${imageUrl}"
+                        alt="${glass.images[0]?.alt || "Glass"}"
+                        class="h-25 w-25 rounded-md"
+                    />
+                    <div >
+                        <h4 class="font-semibold" >${glass.title}</h4>
+                        <p class="text-sm text-gray-500">₹${glass.price}</p>
+                    </div>
+                `;
+                screenglassesContainer.appendChild(glassElement);
+            });
+        } catch (err) {
+            console.error("Error fetching last added glasses:", err);
+        }
+        try {
+            const response = await axios.get("http://localhost:3000/fetchMensglass");
+            const lastThreeGlasses = response.data.data.slice(-3); // Get the last three items
+    
+            // Update the screenglasses container dynamically
+            const screenglassesContainer = document.getElementById("Eyeglasses");
+
+            screenglassesContainer.innerHTML = ""; // Clear previous content
+    
+            lastThreeGlasses.forEach((glass) => {
+                const glassElement = document.createElement("div");
+                glassElement.className = "flex items-center gap-3 mb-3";
+    
+                const imageUrl = glass.images[2]?.url?.replace(/\\/g, "/");
+                glassElement.innerHTML = `
+                
+                    <img
+                        src="http://localhost:3000/${imageUrl}"
+                        alt="${glass.images[0]?.alt || "Glass"}"
+                        class="h-25 w-25 rounded-md"
+                    />
+                    <div >
+                        <h4 class="font-semibold" >${glass.title}</h4>
+                        <p class="text-sm text-gray-500">₹${glass.price}</p>
+                    </div>
+                `;
+                screenglassesContainer.appendChild(glassElement);
+            });
+        } catch (err) {
+            console.error("Error fetching last added glasses:", err);
+        }
+    };
+    const handleMouseLeave = () => {
         setIsHovering(false);
-      };
+    };
+
+
+    const handleSearchChange = async (event) => {
+        const query = event.target.value.trim(); // Trim spaces
+        setSearchQuery(query); // Update the state
+    
+        if (query === "") {
+            setFilteredProducts(productList); // Reset if the query is empty
+            return;
+        }
+    
+        try {
+            const response = await axios.get(`http://localhost:3000/search/${encodeURIComponent(query)}`); // Encode query
+            setFilteredProducts(response.data); // Update filtered products
+
+            console.log("response",response)
+        } catch (error) {
+            console.error("Error searching products:", error);
+            setFilteredProducts([]); // Clear results on error
+        }
+    };
+    
+
     
     
     return (
@@ -156,70 +328,92 @@ function BuyerPage() {
                     <div className="bg-gray-800 text-center">
                         FREE SHIPPING ON ORDERS OVER $75
                     </div>
-                    <div className="flex justify-between items-center container pt-3">
+                    <div className="flex  items-center container pt-3">
                         <div className="text-center">
                             <span className="logo_sub1">NO</span>
                             <span className="logo_sub1">VA</span>
                         </div>
-                        <div className="flex justify-between items-center container px-5">
-                            <div className="flex w-full md:w-auto items-center px-5">
-                            <nav className="relative">
-      <ul className="flex space-x-4">
-        <li
-          className="relative"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          <span className="cursor-pointer">Hover Me</span>
-          {isHovering && (
-            <div className="offcanvas-menu absolute top-full left-0 bg-white p-4 shadow-lg w-72">
-              {lastThreeGlasses.length > 0 ? (
-                lastThreeGlasses.map((glass) => (
-                  <div
-                    key={glass._id}
-                    className="flex items-center mb-3 cursor-pointer"
-                    onClick={() => navigate(`/SingleView/${glass._id}`)}
-                  >
-                    <img
-                      src={`http://localhost:3000/${glass.images[0]?.url}`}
-                      alt={glass.images[0]?.alt || "Glass"}
-                      className="w-16 h-16 object-cover mr-3"
-                    />
-                    <div>
-                      <h4 className="font-medium text-sm">{glass.title}</h4>
-                      <p className="text-sm text-gray-500">₹{glass.price}</p>
+                        <div className="flex  items-center">
+                            <div className="flex w-full md:w-auto items-center px-2">
+
+                            <div className="relative group px-3">
+                        <input
+                            type="text"
+                            placeholder="Search products..."
+                            value={searchQuery}
+                            onChange={handleSearchChange} // Update query
+                            onFocus={() => setIsCanvasOpen(true)} // Show canvas on focus
+                            onBlur={() => setIsCanvasOpen(false)} // Optional: Hide on blur
+                            className="p-2 border bg-white border-gray-300 rounded-md"
+                        />
                     </div>
-                  </div>
-                ))
-              ) : (
-                <p>No glasses available.</p>
-              )}
-            </div>
-          )}
-        </li>
-      </ul>
-    </nav>
-                                <div className="px-3 relative">
-                                    <span className="hover:underline cursor-pointer">Screen Glasses</span>
-                                    <div className="offcanvas-menu">All Products Submenu</div>
-                                </div>
-                                <div className="px-3 relative">
-                                    <span className="hover:underline cursor-pointer">Kids Glasses</span>
-                                    <div className="offcanvas-menu">New Arrivals Submenu</div>
-                                </div>
-                                <div className="px-3 relative">
-                                    <span className="hover:underline cursor-pointer">Contact Lenses</span>
-                                    <div className="offcanvas-menu">Sunglasses Submenu</div>
-                                </div>
-                                <div className="px-3 relative">
-                                    <span className="hover:underline cursor-pointer">Sunglasses</span>
-                                    <div className="offcanvas-menu">Eyeglasses Submenu</div>
-                                </div>
-                                <div className="px-3 relative">
+
+                            <div className="relative group px-2 b"onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                            <span className=" cursor-pointer  border-blue-500">Eyeglasses</span>
+                            <div id="Eyeglasses"
+                                className="absolute hidden z-40 group-hover:block bg-slate-200 p-3 shadow-md w-3/4  border-green-500 rounded-lg"
+                                style={{ top: '100%', left: 0 , width: "50vw "}}
+
+                            >
+                                
+                                All Products Submenu
+                            </div>
+                            </div>
+                            
+                            <div className="relative group px-2 b"onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                            <span className=" cursor-pointer  border-blue-500">Screen Glasses</span>
+                            <div id="screenglasses"
+                                className="absolute hidden z-40 group-hover:block bg-slate-200 p-3 shadow-md w-3/4  border-green-500 rounded-lg"
+                                style={{ top: '100%', left: -96 , width: "50vw "}}
+
+                            >
+                                
+                                All Products Submenu
+                            </div>
+                            </div>
+
+                            
+
+                            <div className="relative group px-2 b" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                            <span className=" cursor-pointer  border-blue-500">Kids Glasses</span>
+                            <div id="kidsGlasses"
+                                className="absolute hidden z-40 group-hover:block bg-slate-200 p-3 shadow-md w-3/4  border-green-500 rounded-lg"
+                                style={{ top: '100%', left: -218 , width: "50vw "}}
+
+                            >
+                               New Arrivals Submenu
+                            </div>
+                            </div>
+
+
+                            <div className="relative group px-2 b" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                            <span className=" cursor-pointer  border-blue-500">Contact Lenses</span>
+                            <div id="ContactLenses"
+                                className="absolute hidden z-40 group-hover:block bg-slate-200 p-3 shadow-md w-3/4  border-green-500 rounded-lg"
+                                style={{ top: '100%', left: -326 , width: "50vw "}}
+
+                            >
+                               New Arrivals Submenu
+                            </div>
+                            </div>
+
+
+                            <div className="relative group px-2 b" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                            <span className=" cursor-pointer  border-blue-500">Sunglasses</span>
+                            <div id="Sunglasses"
+                                className="absolute hidden z-40 group-hover:block bg-slate-200 p-3 shadow-md w-3/4  border-green-500 rounded-lg"
+                                style={{ top: '100%', left: -454 , width: "50vw "}}
+
+                            >
+                               New Arrivals Submenu
+                            </div>
+                            </div>
+
+                                <div className="px-2 relative">
                                     <span className="hover:underline cursor-pointer">About</span>
                                     <div className="offcanvas-menu">About Submenu</div>
                                 </div>
-                                <div className="px-3 relative">
+                                <div className="px-2 relative">
                                     <span className="hover:underline cursor-pointer">Gift Card</span>
                                     <div className="offcanvas-menu">Gift Card Submenu</div>
                                 </div>
@@ -249,6 +443,47 @@ function BuyerPage() {
                         </div>
                     </div>
                 </nav>
+
+                <div
+        className={`offcanvas ${isCanvasOpen ? "open" : ""}`}
+        style={{
+            position: "fixed",
+            top: 0,
+            right: 0,
+            width: "300px",
+            height: "100%",
+            backgroundColor: "white",
+            boxShadow: "-2px 0 5px rgba(0, 0, 0, 0.2)",
+            padding: "20px",
+            transform: isCanvasOpen ? "translateX(0)" : "translateX(100%)",
+            transition: "transform 0.3s ease-in-out",
+        }}
+    >
+        <h2>Search Results</h2>
+        <ul>
+            {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                    <li key={product._id} className="mb-3">
+                        <div onClick={() => handleSingleView(product._id)} className="cursor-pointer flex items-center gap-3">
+                            <img
+                                src={`http://localhost:3000/${product.images[2]?.url?.replace(/\\/g, "/")}`}
+                                alt={product.title}
+                                className="h-20 w-20 rounded-md"
+                            />
+                            <div>
+                                <h4 className="font-semibold">{product.title}</h4>
+                                <p className="text-sm text-gray-500">₹{product.price}</p>
+                            </div>
+                        </div>
+                    </li>
+                ))
+            ) : (
+                <p>No products found.</p>
+            )}
+        </ul>
+    </div>
+
+         
 
                 <div className="flex">
                     <div className="relative">
@@ -287,7 +522,7 @@ function BuyerPage() {
                                 productList.map((product) => {
                                     let firstImageUrl = product.images[2]?.url?.replace(/\\/g, '/');
                                     let firstImageAlt = product.images[0]?.alt || "Product Image";
-                                    console.log(firstImageUrl)
+                                    // console.log(firstImageUrl)
                                     return (
                                         <ul className="cards" key={product._id}>
                                             <li>
@@ -355,7 +590,15 @@ function BuyerPage() {
                         </div>
                     )}
                 </div>
-                <div><span className="text-5xl font-serif px-5 underline">MEN GLASS</span></div>
+                <div className="w-full"style={{
+                                                backgroundImage: `url(https://toplineoptical.com/wp-content/uploads/2024/01/eye-glasses-banner-1.jpg)`,
+                                                backgroundPosition: 'center',
+                                                backgroundRepeat: 'no-repeat',
+                                                backgroundSize: 'cover',
+                                                width: '100%',
+                                                height: '50vh',
+                                            }}>
+                <span className="text-5xl font-serif px-5 underline" ></span></div>
                 <div onLoad={mensglass}>
 
                     <div className=" ">

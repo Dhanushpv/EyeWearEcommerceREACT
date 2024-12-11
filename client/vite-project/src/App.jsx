@@ -25,6 +25,8 @@ import AddtoCartPage from './Components/AddtoCartPage/AddtoCartPage';
 import './Components/AddtoCartPage/AddtoCartPage.css'
 import WishList from './Components/WishList/Wishlist';
 import CheckoutPage from './Components/CheckoutPage/CheckoutPage';
+import AdminPanel from './Components/AdminPanel/AdminPanel';
+
 
 
 // import './App.css'
@@ -53,6 +55,8 @@ function App() {
       <Route path={'/AddtoCartPage'} exact element={<AddtoCartPage />} />
       <Route path={'/WishList'} exact element={<WishList />} />
       <Route path={'/CheckoutPage'} exact element={<CheckoutPage />} />
+      <Route path={'/AdminPanel'} exact element={<AdminPanel />} />
+
 
 
 

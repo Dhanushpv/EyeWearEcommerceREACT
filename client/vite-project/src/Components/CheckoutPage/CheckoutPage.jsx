@@ -9,11 +9,12 @@ function CheckoutPage() {
     const [error, setError] = useState(null);
     const [checkoutData, setCheckoutData] = useState([]);
     const [selectedAddress, setSelectedAddress] = useState('');
+    console.log("userid ", id)
 
     // Load addresses from the server
     const addressLoad = async () => {
-       
-;
+
+        ;
 
         try {
             const response = await axios.get(`http://localhost:3000/addAddressLoad/${id}`);
@@ -26,35 +27,99 @@ function CheckoutPage() {
     };
 
     // Proceed to buy products
+    // const proceedToBuy = async () => {
+
+    //     if (!selectedAddress) {
+    //         alert('Please select a delivery address before proceeding.');
+    //         return;
+    //     }
+
+    //     if (!checkoutData || checkoutData.length === 0) {
+    //         alert('Missing checkout data. Please try again.');
+    //         return;
+    //     }
+
+    //     const products = checkoutData.map(item => ({
+    //         productId: item._id,
+    //         quantity: item.quantity,
+    //     }));
+    //     console.log("products", products)
+
+    //     try {
+    //         // React code (CheckoutPage)
+    //         const response = await axios.post(`http://localhost:3000/orderCart/${id}`, { products: products });
+
+
+    //         console.log('Order result:', response.data);
+    //         alert('Order placed successfully!');
+    //     } catch (error) {
+    //         console.error('Error proceeding to buy:', error);
+    //         alert('Error while placing the order. Please try again.');
+    //     }
+    // };
+
     const proceedToBuy = async () => {
-       
         if (!selectedAddress) {
             alert('Please select a delivery address before proceeding.');
             return;
         }
-
+    
         if (!checkoutData || checkoutData.length === 0) {
             alert('Missing checkout data. Please try again.');
             return;
         }
-
+    
         const products = checkoutData.map(item => ({
-            productId: item._id,
+            productId: item.productId,
             quantity: item.quantity,
         }));
-
+        console.log("products", products);
+    
         try {
-// React code (CheckoutPage)
-const response = await axios.post(`http://localhost:3000/orderCart/${id}`, { products: products });
-
-
+            // Fetch all products from the 'AllProducts' endpoint
+            const allProductsResponse = await axios.get('http://localhost:3000/AllProducts');
+            console.log('API response:', allProductsResponse);
+    
+            let allProducts = allProductsResponse.data;
+            console.log("allProducts", allProducts);
+    
+            // Access the product list from the response
+            let data = allProducts.data;
+            console.log("Product list from API:", data);
+    
+            // Validate the format of the response
+            if (!Array.isArray(data)) {
+                if (data.products && Array.isArray(data.products)) {
+                    data = data.products; // Adjust for nested structure if needed
+                } else {
+                    throw new Error('Invalid response format: Unable to extract products array');
+                }
+            }
+    
+            // Match the product IDs in the cart with the API data
+            const invalidProducts = products.filter(item =>
+                !data.some(product => product._id === item.productId)
+            );
+    
+            if (invalidProducts.length > 0) {
+                console.error('Invalid products:', invalidProducts);
+                alert('Some products are invalid or no longer available.');
+                return;
+            }
+    
+            // Proceed with the order if all products are valid
+            const response = await axios.post(`http://localhost:3000/orderCart/${id}`, { products: products });
+    
             console.log('Order result:', response.data);
             alert('Order placed successfully!');
         } catch (error) {
-            console.error('Error proceeding to buy:', error);
+            console.error('Error proceeding to buy:', error.message || error);
             alert('Error while placing the order. Please try again.');
         }
     };
+    
+    
+    
 
     // Load checkout data from the URL
     useEffect(() => {

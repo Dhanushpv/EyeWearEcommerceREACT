@@ -39,7 +39,7 @@ function Login() {
             // Redirect based on user type
             if (usertype === "Admin") {
                 alert("Admin logged in successfully");
-                navigate = `Admin.html?login=${token_key}&id=${id}`;
+                navigate (`/AdminPanel?login=${token_key}&id=${id}`)
             } else if (usertype === "Buyer") {
                 alert("Buyer logged in successfully");
                 navigate (`/Buyerpage?login=${token_key}&id=${id}`)

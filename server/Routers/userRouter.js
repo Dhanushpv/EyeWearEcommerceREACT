@@ -31,11 +31,27 @@ router.delete('/removeFromCart/:id',userController.removeFromCart);
 router.get('/MerchandiseHub/:id',userController.ProductMart);
 router.delete('/DeleteProduct/:id',userController.DeleteProduct);
 router.put('/productupdation/:id',userController.productupdation);
+
+
+
+
 router.post('/orderCart/:id', userController.buyNow);
 
+
+
+
+
+
 router.get('/status',userController.checkWishlistStatus);
+
 router.post('/updateCart/:id',userController.updateCart);
-router.get('/fetchMensglass',userController.fetchMensglass)
+router.get('/fetchMensglass',userController.fetchMensglass);
+// router.get('/search',userController.searchProducts);
+router.get('/search/:q', userController.searchProducts);
+router.get('/bestseller',userController.bestseller);
+router.get('/totaluser',userController.totaluser);
+router.get('/totalbuyers',userController.totalBuyers);
+
 
 
 
