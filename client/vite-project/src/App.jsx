@@ -26,6 +26,11 @@ import './Components/AddtoCartPage/AddtoCartPage.css'
 import WishList from './Components/WishList/Wishlist';
 import CheckoutPage from './Components/CheckoutPage/CheckoutPage';
 import AdminPanel from './Components/AdminPanel/AdminPanel';
+import SingleChekout from './Components/SingleChekout/SingleChekout';
+import SellerList from './Components/SellerList/SellerList';
+import BuyerList from './Components/BuyerList/BuyerList';
+import SingleSellerProducts from './Components/SingleSellerProducts/SingleSellerProducts';
+import NavBar from './Components/NavBar/NavBar';
 
 
 
@@ -56,6 +61,16 @@ function App() {
       <Route path={'/WishList'} exact element={<WishList />} />
       <Route path={'/CheckoutPage'} exact element={<CheckoutPage />} />
       <Route path={'/AdminPanel'} exact element={<AdminPanel />} />
+      <Route path={'/SingleChekout'} exact element={<SingleChekout />} />
+      <Route path={'/SellerList'} exact element={<SellerList />} />
+      <Route path={'/BuyerList'} exact element={<BuyerList />} />
+      <Route path={'/SingleSellerProducts'} exact element={<SingleSellerProducts />} />
+      <Route path={'/NavBar'} exact element={<NavBar />} />
+
+
+
+
+
 
 
 

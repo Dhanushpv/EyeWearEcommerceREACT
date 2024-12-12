@@ -631,3 +631,6 @@
 .offcanvas-menu {
   z-index: 9999;
 }
+.search:hover{
+  display: block;
+}

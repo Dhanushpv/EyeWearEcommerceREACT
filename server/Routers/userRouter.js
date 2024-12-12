@@ -27,30 +27,26 @@ router.post('/addtowishlist',userController.addWishList);
 router.post('/addAddress/:id', userController.addAddress);
 router.get('/loadWishList/:id',userController.loadWishList)
 router.get('/addAddressLoad/:id',userController.AddressLoad);
-router.delete('/removeFromCart/:id',userController.removeFromCart);
 router.get('/MerchandiseHub/:id',userController.ProductMart);
 router.delete('/DeleteProduct/:id',userController.DeleteProduct);
 router.put('/productupdation/:id',userController.productupdation);
-
-
-
-
+router.delete('/removeFromCart/:userId',userController.removeProductFromCart);
 router.post('/orderCart/:id', userController.buyNow);
-
-
-
-
-
-
 router.get('/status',userController.checkWishlistStatus);
-
 router.post('/updateCart/:id',userController.updateCart);
 router.get('/fetchMensglass',userController.fetchMensglass);
-// router.get('/search',userController.searchProducts);
 router.get('/search/:q', userController.searchProducts);
 router.get('/bestseller',userController.bestseller);
-router.get('/totaluser',userController.totaluser);
+router.get('/totalseller',userController.totalseller);
 router.get('/totalbuyers',userController.totalBuyers);
+router.delete('/removeWishlist/:userId',userController.removeWishlist);
+router.get('/totalorders',userController.totalorders);
+router.get('/totalRevenue',userController.totalRevenue);
+router.get('/sellerDetails',userController.sellerDetails);
+router.get('/BuyerDetails',userController.BuyerDetails);
+router.get('/SingleSellerproducts/:userId',userController.SingleSellerproducts)
+
+
 
 
 

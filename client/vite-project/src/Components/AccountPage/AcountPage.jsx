@@ -17,6 +17,9 @@ function AcountPage() {
     const ContactPageClick = () => {
         navigate (`/ContactPage?login=${token_key}&id=${id}`)
     };
+    const WishList = () => {
+        navigate (`/WishList?login=${token_key}&id=${id}`)
+    };
     return (
         <>
             <nav className="p-3 /* bg-white not found */">
@@ -150,7 +153,7 @@ function AcountPage() {
                                 </div>
                             </div>
                             {/* Card 6 */}
-                            <div className="w-full md:w-1/2 lg:w-1/3 px-4" >
+                            <div className="w-full md:w-1/2 lg:w-1/3 px-4" onClick={WishList} >
                                 <div className="p-10 md:px-7 xl:px-10 rounded-[20px] bg-white shadow-md hover:shadow-lg mb-8">
                                     <div className="w-[70px] h-[70px] flex  rounded-2xl mb-8">
                                         <img

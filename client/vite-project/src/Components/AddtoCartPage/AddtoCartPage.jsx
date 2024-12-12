@@ -85,15 +85,21 @@ function AddtoCartPage() {
 
   const removeFromCart = async (productId) => {
     try {
-      await axios.delete(`http://localhost:3000/removeFromCart/${productId}`);
-      setCartItems((prevItems) =>
-        prevItems.filter((item) => item.productId !== productId)
-      );
+        // Send the productId in the request body along with the userId
+        await axios.delete(`http://localhost:3000/removeFromCart/${userId}`, {
+            data: { productId }, // Pass the productId in the request body
+        });
+
+        // Update the cart items state to remove the product from the UI
+        setCartItems((prevItems) =>
+            prevItems.filter((item) => item.productId !== productId)
+        );
     } catch (err) {
-      console.error("Error removing item:", err);
-      alert("Failed to remove item.");
+        console.error("Error removing item:", err);
+        alert("Failed to remove item.");
     }
-  };
+};
+
 
   const handleQuantityChange = async (item, product, increment) => {
     const newQuantity = item.quantity + increment;

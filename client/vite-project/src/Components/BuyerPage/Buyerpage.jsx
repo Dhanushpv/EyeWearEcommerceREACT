@@ -26,9 +26,12 @@ function BuyerPage() {
 
         const isLoggedIn = localStorage.getItem("isLoggedIn");
         const userType = localStorage.getItem("userType");
+        console.log("isLoggedIn",isLoggedIn)
+        console.log("userType",userType)
+
 
         if (isLoggedIn) {
-            if (userType === "Buyer" || userType === "Seller") {
+            if (userType === "Buyer" || userType === "Seller" || userType === "Admin") {
                 loginSection.innerHTML = `
                     <button id="logoutButton" style="margin-left: 10px;">Logout</button>
                 `;
@@ -292,6 +295,7 @@ function BuyerPage() {
         } catch (err) {
             console.error("Error fetching last added glasses:", err);
         }
+
     };
     const handleMouseLeave = () => {
         setIsHovering(false);
@@ -309,9 +313,13 @@ function BuyerPage() {
     
         try {
             const response = await axios.get(`http://localhost:3000/search/${encodeURIComponent(query)}`); // Encode query
-            setFilteredProducts(response.data); // Update filtered products
+            ; // Update filtered products
 
             console.log("response",response)
+            let data = response.data
+            console.log("data",data)
+            setFilteredProducts(data)
+
         } catch (error) {
             console.error("Error searching products:", error);
             setFilteredProducts([]); // Clear results on error
@@ -336,7 +344,7 @@ function BuyerPage() {
                         <div className="flex  items-center">
                             <div className="flex w-full md:w-auto items-center px-2">
 
-                            <div className="relative group px-3">
+                            <div className="relative group px-3" >
                         <input
                             type="text"
                             placeholder="Search products..."
@@ -445,19 +453,19 @@ function BuyerPage() {
                 </nav>
 
                 <div
-        className={`offcanvas ${isCanvasOpen ? "open" : ""}`}
+        className="z-40 "
         style={{
             position: "fixed",
-            top: 0,
-            right: 0,
-            width: "300px",
+            left: 0,
+            width: "500px",
             height: "100%",
             backgroundColor: "white",
             boxShadow: "-2px 0 5px rgba(0, 0, 0, 0.2)",
             padding: "20px",
-            transform: isCanvasOpen ? "translateX(0)" : "translateX(100%)",
+            transform: isCanvasOpen ? "translateX(0)" : "translateX(-100%)", // Slide in/out from left
             transition: "transform 0.3s ease-in-out",
         }}
+        
     >
         <h2>Search Results</h2>
         <ul>

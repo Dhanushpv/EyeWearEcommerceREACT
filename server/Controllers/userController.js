@@ -535,6 +535,51 @@ exports.updateCart = async (req, res) => {
     }
 };
 
+exports.SigleupdateCart = async (req, res) => {
+    try {
+        const { productId, newQuantity } = req.body;
+        const userId  = req.params.id;  // Extract userId from params
+
+        // Validate the quantity
+        if (newQuantity <= 0) {
+            return res.status(400).json({ success: false, message: "Quantity must be greater than zero." });
+        }
+
+        // Find the user by userId
+        const user = await users.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found!" });
+        }
+
+        // Assuming the cart is stored in user.addCart[0]
+        const cart = user.addCart && user.addCart[0];
+        if (!cart) {
+            return res.status(400).json({ success: false, message: "Cart is empty!" });
+        }
+
+        // Find the product index in the cart
+        const productIndex = cart.items.findIndex(item => item.productId.toString() === productId);
+        if (productIndex === -1) {
+            return res.status(404).json({ success: false, message: "Product not found in cart!" });
+        }
+
+        // Update the quantity of the product
+        cart.items[productIndex].quantity = newQuantity;
+
+        // Recalculate the total price (ensure the price is stored for each product)
+        cart.totalPrice = cart.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+        // Save the updated cart back to the user's addCart array (ensure addCart is updated)
+        await user.save();
+
+        // Respond with the updated cart
+        res.status(200).json({ success: true, message: "Cart updated successfully.", cart });
+    } catch (error) {
+        console.error("Error updating cart:", error);
+        res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
+
 exports.CartView = async (req, res) => {
     try {
         // Fetch only the `addcart` field from all users
@@ -563,7 +608,7 @@ exports.CartView = async (req, res) => {
 
 exports.addWishList = async (req, res) => {
     try {
-        const { userId, productId } = req.body;
+        const { userId, productId, action } = req.body;  // `action` will be either 'add' or 'remove'
 
         // Fetch the user
         const user = await users.findById(userId);
@@ -583,36 +628,57 @@ exports.addWishList = async (req, res) => {
             });
         }
 
-        // Check if the product is already in the wishlist
-        const existingWishlistItem = user.wishlist.find(item => item.productId === productId);
+        // Handle add/remove logic
+        if (action === 'add') {
+            // Check if the product is already in the wishlist
+            const existingWishlistItem = user.wishlist.find(item => item.productId === productId);
+            if (existingWishlistItem) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Product already in wishlist!",
+                });
+            }
 
-        if (existingWishlistItem && existingWishlistItem.isInWishlist) {
-            return res.status(400).json({
-                success: false,
-                message: "Product already in wishlist!",
-            });
-        }
-
-        // Add or update the wishlist item
-        if (existingWishlistItem) {
-            existingWishlistItem.isInWishlist = true;
-        } else {
+            // Add to wishlist
             user.wishlist.push({
                 productId,
                 title: product.title,
                 price: product.price,
-                isInWishlist: true,
+                isInWishlist: true, // Mark as added to wishlist
+            });
+
+            await user.save();
+            return res.status(200).json({
+                success: true,
+                message: "Item successfully added to the wishlist.",
+            });
+        } else if (action === 'remove') {
+            // Find and remove the product from the wishlist
+            const wishlistIndex = user.wishlist.findIndex(item => item.productId === productId);
+            if (wishlistIndex === -1) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Product not found in wishlist!",
+                });
+            }
+
+            // Remove the item or mark it as not in wishlist
+            user.wishlist[wishlistIndex].isInWishlist = false;  // Mark as removed
+            await user.save();
+
+            return res.status(200).json({
+                success: true,
+                message: "Item successfully removed from the wishlist.",
+            });
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid action!",
             });
         }
 
-        await user.save();
-
-        return res.status(200).json({
-            success: true,
-            message: "Item successfully added to the wishlist.",
-        });
     } catch (error) {
-        console.error("Error adding to wishlist:", error);
+        console.error("Error adding/removing from wishlist:", error);
         res.status(500).json({
             success: false,
             message: "Internal server error.",
@@ -636,7 +702,7 @@ exports.checkWishlistStatus = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            isInWishlist: wishlistItem?.isInWishlist || false,
+            isInWishlist: wishlistItem?.isInWishlist || false,  // Return the `isInWishlist` flag
         });
     } catch (error) {
         console.error("Error checking wishlist status:", error);
@@ -761,38 +827,6 @@ exports.AddressLoad = async (req, res) => {
     }
 
 }
-
-exports.removeFromCart = async (req, res) => {
-    try {
-        const { userId, productId } = req.params;
-
-        const user = await users.findById(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found!" });
-        }
-
-        const cart = user.addCart[0];
-        if (!cart) {
-            return res.status(400).json({ success: false, message: "Cart is empty!" });
-        }
-
-        const productIndex = cart.items.findIndex(item => item.productId.toString() === productId);
-        if (productIndex === -1) {
-            return res.status(404).json({ success: false, message: "Product not found in the cart!" });
-        }
-
-        cart.items.splice(productIndex, 1); // Remove product from cart
-
-        // Recalculate total price
-        cart.totalPrice = cart.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-        
-        await user.save();
-        res.status(200).json({ success: true, message: "Product removed from cart.", cart });
-    } catch (error) {
-        console.error("Error removing from cart:", error);
-        res.status(500).json({ success: false, message: "Internal server error." });
-    }
-};
 
 exports.ProductMart = async (req, res) => {
     try {
@@ -951,10 +985,6 @@ exports.productupdation = async (req, res) => {
     }
 };
 
-
-
-
-
 exports.buyNow = async (req, res) => {
     try {
         const { id: userId } = req.params; // Extract userId from params
@@ -1046,11 +1076,6 @@ exports.buyNow = async (req, res) => {
     }
 };
 
-
-
-
-
-
 exports.fetchMensglass = async (req, res) => {
     try {
         // Find the ObjectId for 'Men' in the Gender collection
@@ -1117,7 +1142,7 @@ exports.searchProducts = async (req, res) => {
     }
 };
 
-exports.bestseller = async (req, res) =>{
+exports.bestseller = async (req, res) => {
 
     try {
         const bestSeller = await users.aggregate([
@@ -1160,25 +1185,247 @@ exports.bestseller = async (req, res) =>{
       }
 }
 
-exports.totaluser = async (req, res) =>{
-    try {
-        // Count the number of users in the User collection
-        const userCount = await users.countDocuments({});
-        res.json({ totalUsers: userCount });
-    } catch (error) {
-        console.error('Error counting users:', error);
-        res.status(500).json({ error: 'An error occurred while counting users' });
-    }
-}
+exports.removeProductFromCart = async (req, res) => {
+    const { userId } = req.params; // Assuming the user ID is in the params
+    const { productId } = req.body; // Extract productId from the request body
 
-exports.totalBuyers = async (req, res) => {
     try {
-        // Count the number of users with role 'buyer'
-        const buyerCount = await users.countDocuments({ role: 'Buyer' });
-        res.json({ totalBuyers: buyerCount });
+        // Find and update the user's cart
+        const updatedUser = await users.findByIdAndUpdate(
+            userId,
+            {
+                $pull: { 'addCart.0.items': { productId } } // Pull the item with the matching productId from the first cart (index 0)
+            },
+            { new: true } // Return the updated user document
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Assuming addCart[0] is the cart you're working with
+        const remainingItems = updatedUser.addCart[0].items;
+        const updatedTotalPrice = remainingItems.reduce((acc, item) => acc + item.quantity * item.price, 0);
+
+        // Update the totalPrice field in the document
+        updatedUser.addCart[0].totalPrice = updatedTotalPrice;
+        await updatedUser.save();
+
+        res.status(200).json({
+            message: 'Product removed from cart successfully',
+            cart: updatedUser.addCart[0], // Return the updated first cart
+        });
     } catch (error) {
-        console.error('Error counting buyers:', error);
-        res.status(500).json({ error: 'An error occurred while counting buyers' });
+        res.status(500).json({ message: 'Error removing product from cart', error });
     }
 };
 
+exports.removeWishlist = async (req, res) => {
+    const { userId } = req.params; // Assuming the user ID is in the params
+    const { productId } = req.body; // Extract productId from the request body
+
+    try {
+        // Find and update the user's wishlist
+        const updatedUser = await users.findByIdAndUpdate(
+            userId,
+            {
+                $pull: { wishlist: { productId } } // Pull the item with the matching productId from the wishlist
+            },
+            { new: true } // Return the updated user document
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            message: 'Product removed from wishlist successfully',
+            wishlist: updatedUser.wishlist, // Return the updated wishlist
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error removing product from wishlist', error });
+    }
+};
+
+
+
+exports.totalBuyers = async (req, res) => {
+    try {
+        // Step 1: Find the userType ID for "Buyer" from the userType collection
+        const buyerType = await Usertype.findOne({ usertype: 'Buyer' });
+        console.log("buyerType :",buyerType)
+        
+        if (!buyerType) {
+            return res.status(404).json({ error: 'Buyer type not found' });
+        }
+
+        // Step 2: Count the users with the retrieved buyerType ID
+        const buyerCount = await users.countDocuments({ usertype: buyerType._id });
+        console.log(buyerCount)
+        
+        res.json({ totalBuyers: buyerCount });
+    } catch (error) {
+        console.error('Error finding total buyers:', error);
+        res.status(500).json({ error: 'An error occurred while retrieving the total buyers' });
+    }
+};
+
+exports.totalseller = async (req, res) => {
+    try {
+        // Step 1: Find the userType ID for "Buyer" from the userType collection
+        const sellerType = await Usertype.findOne({ usertype: 'Seller' });
+        console.log("sellerType :",sellerType)
+        
+        if (!sellerType) {
+            return res.status(404).json({ error: 'Buyer type not found' });
+        }
+
+        // Step 2: Count the users with the retrieved buyerType ID
+        const sellerCount = await users.countDocuments({ usertype: sellerType._id });
+        console.log(sellerCount)
+        
+        res.json({ totalSeller: sellerCount });
+    } catch (error) {
+        console.error('Error finding total buyers:', error);
+        res.status(500).json({ error: 'An error occurred while retrieving the total buyers' });
+    }
+};
+
+
+exports.totalorders = async (req, res) => {
+    try {
+      // Aggregate the total number of orders across all users
+      const result = await users.aggregate([
+        {
+          $project: {
+            // Ensure that "products" inside "buyNow" is treated as an empty array if it's missing or null
+            orderCount: { $size: { $ifNull: ["$buyNow.products", []] } }, // Access the products array in buyNow
+          },
+        },
+        {
+          $group: {
+            _id: null, // Group all users together
+            totalOrders: { $sum: "$orderCount" }, // Sum up all the order counts
+          },
+        },
+      ]);
+  
+      // Extract totalOrders from the result, default to 0 if no result
+      const totalOrders = result.length > 0 ? result[0].totalOrders : 0;
+  
+      return res.status(200).json({ success: true, totalOrders });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  };
+  
+exports.totalRevenue = async (req, res) => {
+    try {
+      // Aggregate the total revenue across all users
+      const result = await users.aggregate([
+        {
+          $project: {
+            // Calculate the total price for each product in the 'buyNow.products' array
+            totalPrice: {
+              $sum: {
+                $map: {
+                  input: { $ifNull: ["$buyNow.products", []] }, // Ensure buyNow.products is not null
+                  as: "product",
+                  in: {
+                    $multiply: ["$$product.price", "$$product.quantity"], // Multiply price by quantity
+                  },
+                },
+              },
+            },
+          },
+        },
+        {
+          $group: {
+            _id: null, // Group all users together
+            totalRevenue: { $sum: "$totalPrice" }, // Sum up all the totalPrice values
+          },
+        },
+      ]);
+  
+      // Extract totalRevenue from the result, default to 0 if no result
+      const totalRevenue = result.length > 0 ? result[0].totalRevenue : 0;
+  
+      return res.status(200).json({ success: true, totalRevenue });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  };
+  
+
+exports.sellerDetails = async (req, res) =>{
+    try {
+        // Step 1: Find the userType ID for "Buyer" from the userType collection
+        const sellerType = await Usertype.findOne({ usertype: 'Seller' });
+        console.log("sellerType :",sellerType)
+        
+        if (!sellerType) {
+            return res.status(404).json({ error: 'Buyer type not found' });
+        }
+
+        // Step 2: Count the users with the retrieved buyerType ID
+        const sellerCount = await users.find({ usertype: sellerType._id });
+        console.log(sellerCount)
+        
+        res.json({ totalSeller: sellerCount });
+    } catch (error) {
+        console.error('Error finding total buyers:', error);
+        res.status(500).json({ error: 'An error occurred while retrieving the total buyers' });
+    }
+}
+   
+
+exports.BuyerDetails = async (req, res) =>{
+    try {
+        // Step 1: Find the userType ID for "Buyer" from the userType collection
+        const BuyerType = await Usertype.findOne({ usertype: 'Buyer' });
+        console.log("BuyerType :",BuyerType)
+        
+        if (!BuyerType) {
+            return res.status(404).json({ error: 'Buyer type not found' });
+        }
+
+        // Step 2: Count the users with the retrieved buyerType ID
+        const BuyerCount = await users.find({ usertype: BuyerType._id });
+        console.log(BuyerCount)
+        
+        res.json({ totalBuyer: BuyerCount });
+    } catch (error) {
+        console.error('Error finding total buyers:', error);
+        res.status(500).json({ error: 'An error occurred while retrieving the total buyers' });
+    }
+}
+
+exports.SingleSellerproducts = async (req, res) => {
+
+    try {
+        // Assuming the userId is passed as a query parameter or part of the URL
+        const { userId } = req.params; // Or use req.query.userId if passed as a query parameter
+    
+        // Validate userId
+        if (!userId) {
+          return res.status(400).json({ message: 'User ID is required' });
+        }
+    
+        // Fetch products from AddData collection based on userId
+        const products = await AddData.find({ userId });
+    
+        // If no products are found
+        if (!products || products.length === 0) {
+          return res.status(404).json({ message: 'No products found for this user' });
+        }
+    
+        // Send the products as a response
+        res.status(200).json({ success: true, products });
+      } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+      }
+
+}
