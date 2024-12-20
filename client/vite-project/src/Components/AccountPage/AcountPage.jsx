@@ -20,6 +20,10 @@ function AcountPage() {
     const WishList = () => {
         navigate (`/WishList?login=${token_key}&id=${id}`)
     };
+
+    const orederItemsPageClick = () => {
+        navigate (`/OrderItems?login=${token_key}&id=${id}`)
+    };
     return (
         <>
             <nav className="p-3 /* bg-white not found */">
@@ -67,7 +71,7 @@ function AcountPage() {
                         </div>
                         <div className="flex flex-wrap gap-0 -mx-4 ">
                             {/* Card 1 */}
-                            <div className="w-full md:w-1/2 lg:w-1/3 px-4">
+                            <div className="w-full md:w-1/2 lg:w-1/3 px-4" onClick={orederItemsPageClick}>
                                 <div className="p-10 md:px-7 xl:px-10 rounded-[20px] bg-white shadow-md hover:shadow-lg mb-8">
                                     <div className="w-[70px] h-[70px] flex  rounded-2xl mb-8">
                                         <img

@@ -4,11 +4,17 @@ import axios from 'axios';
 function SingleChekout() {
     let params = new URLSearchParams(window.location.search);
     let id = params.get('id');
+    let quantity= params.get('quantity')
     const [addresses, setAddresses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [checkoutData, setCheckoutData] = useState([]); // Initialize with an empty array
     const [selectedAddress, setSelectedAddress] = useState('');
+
+    const products1 = checkoutData.map(item => item._id);
+    console.log("products1", products1);
+
+    let datapp=[{productId : products1,quantity:quantity}]
 
     // Load addresses from the server
     const addressLoad = async () => {
@@ -67,7 +73,7 @@ function SingleChekout() {
 
 
             // Proceed with the order if all products are valid
-            const response = await axios.post(`http://localhost:3000/orderCart/${id}`, { products });
+            const response = await axios.post(`http://localhost:3000/orderCart/${id}`, { products: datapp });
             alert('Order placed successfully!');
             console.log("response",response)
         } catch (error) {

@@ -105,7 +105,7 @@ function SingleView() {
         const encodedTotalPrice = encodeURIComponent(totalPrice);
 
         // Proceed with navigation
-        navigate(`/SingleChekout?id=${encodeURIComponent(userId)}&checkoutData=${encodedCheckoutData}&totalPrice=${encodedTotalPrice}`);
+        navigate(`/SingleChekout?id=${encodeURIComponent(userId)}&checkoutData=${encodedCheckoutData}&totalPrice=${encodedTotalPrice}&quantity=${quantity}`);
     };
 
     return (

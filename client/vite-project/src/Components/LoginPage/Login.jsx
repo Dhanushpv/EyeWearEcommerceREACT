@@ -38,13 +38,13 @@ function Login() {
 
             // Redirect based on user type
             if (usertype === "Admin") {
-                alert("Admin logged in successfully");
+                // alert("Admin logged in successfully");
                 navigate (`/AdminPanel?login=${token_key}&id=${id}`)
             } else if (usertype === "Buyer") {
-                alert("Buyer logged in successfully");
+                // alert("Buyer logged in successfully");
                 navigate (`/Buyerpage?login=${token_key}&id=${id}`)
             } else if (usertype === "Seller") {
-                alert("Seller logged in successfully");
+                // alert("Seller logged in successfully");
                 navigate (`/Seller?login=${token_key}&id=${id}`)
             } else {
                 alert("Unknown user type");
@@ -60,6 +60,13 @@ function Login() {
         setIsLoggedIn(false);
         setUserType('');
     }
+
+    const Signup = () => {
+        navigate (`/Signin`)
+    };
+    const ForgotPassword = () => {
+        navigate (`/ResetPassword`)
+    };
 
     return (
         <div className="flex justify-end">
@@ -82,16 +89,16 @@ function Login() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)} 
                             />
-                            <p className="page-link">
+                            <p className="page-link" onClick={ForgotPassword}>
                                 <span className="page-link-label">Forgot Password?</span>
                             </p>
                             <button className="form-btn">Log in</button>
                         </form>
-                        <p className="sign-up-label">
+                        <p className="sign-up-label" onClick={Signup}>
                             Don't have an account?
-                            <a className="sign-up-link" href="./signUP.html">
+                            <span className="sign-up-link" >
                                 Sign up
-                            </a>
+                            </span>
                         </p>
                     </div>
                 ) : (

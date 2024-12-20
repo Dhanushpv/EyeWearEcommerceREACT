@@ -335,7 +335,7 @@ exports.SingleProductList = async (req, res) => {
         Singleid = req.params.id
         console.log("Singleid", Singleid);
 
-        SingleData = await AddData.findOne({ _id: Singleid });
+        SingleData = await AddData.findOne({ _id: Singleid }).populate('category').populate('gender');
         console.log("SingleUser", SingleData);
 
         let response = success_function({
@@ -899,9 +899,9 @@ exports.productupdation = async (req, res) => {
         console.log("Request Body:", body);
 
         // Validate body data
-        if (!body.title || !body.price || !body.category || !body.gender) {
-            throw new Error("Missing required fields: title, price, category, or gender.");
-        }
+        // if (!body.title || !body.price || !body.category || !body.gender) {
+        //     throw new Error("Missing required fields: title, price, category, or gender.");
+        // }
 
         // Find category by name
         const category = await Categories.findOne({ category: body.category });
@@ -987,7 +987,8 @@ exports.productupdation = async (req, res) => {
 
 exports.buyNow = async (req, res) => {
     try {
-        const { id: userId } = req.params; // Extract userId from params
+        const { id: userId } = req.params;
+        console.log("userId",userId)
         const products = req.body.products; // Array of products (productId, quantity)
 
         // Debugging logs
@@ -1291,7 +1292,6 @@ exports.totalseller = async (req, res) => {
     }
 };
 
-
 exports.totalorders = async (req, res) => {
     try {
       // Aggregate the total number of orders across all users
@@ -1318,7 +1318,7 @@ exports.totalorders = async (req, res) => {
       console.error(error);
       return res.status(500).json({ success: false, message: "Server error" });
     }
-  };
+};
   
 exports.totalRevenue = async (req, res) => {
     try {
@@ -1356,9 +1356,8 @@ exports.totalRevenue = async (req, res) => {
       console.error(error);
       return res.status(500).json({ success: false, message: "Server error" });
     }
-  };
+};
   
-
 exports.sellerDetails = async (req, res) =>{
     try {
         // Step 1: Find the userType ID for "Buyer" from the userType collection
@@ -1380,7 +1379,6 @@ exports.sellerDetails = async (req, res) =>{
     }
 }
    
-
 exports.BuyerDetails = async (req, res) =>{
     try {
         // Step 1: Find the userType ID for "Buyer" from the userType collection
@@ -1429,3 +1427,27 @@ exports.SingleSellerproducts = async (req, res) => {
       }
 
 }
+
+
+
+
+exports.orderItems = async (req, res) => {
+    try {
+        // Assuming the user's ID is available in the request (e.g., from authentication middleware)
+        const userId = req.params.userId;
+
+        // Fetch the user's orders from the "buyNow" section
+        const user = await users.findById(userId).select('buyNow'); // Select only the "buyNow" field
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Send the orders in the response
+        res.status(200).json({ orders: user.buyNow });
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+

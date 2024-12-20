@@ -229,9 +229,9 @@ function SellerProducts() {
     }
   };
 
-  const UpdateClick = (id) => {
+  const UpdateClick = (productId) => {
     // Navigate to the update page with the product ID
-    navigate(`/UpdateProduct?login=${token_key}&id=${id}`)
+    navigate(`/UpdateProduct?login=${token_key}&id=${id}&productId=${productId}`)
   };
 
   if (loading) {
@@ -292,7 +292,7 @@ function SellerProducts() {
                 <span className="text-title">{product.price}</span>
               </div>
               <div className="card-footer1">
-                <div className="card-button1" onClick={UpdateClick}>
+                <div className="card-button1" onClick={()=>UpdateClick(product._id)}>
                   <svg
                     className="svg-icon"
                     viewBox="0 0 20 20"

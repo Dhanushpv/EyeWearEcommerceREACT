@@ -4,7 +4,7 @@ import BuyerPage from './Components/BuyerPage/Buyerpage';
 import './Components/BuyerPage/Buyerpage.css'
 import Signin from './Components/SigninPage/Signin';
 import './Components/SigninPage/Signin.css'
-import Login from './Components/Loginpage/Login';
+import Login from './Components/LoginPage/Login';
 import './Components/LoginPage/Login.css'
 import Seller from './Components/SellerPage/Sellerpage';
 import './Components/SellerPage/Sellerpage.css'
@@ -31,7 +31,8 @@ import SellerList from './Components/SellerList/SellerList';
 import BuyerList from './Components/BuyerList/BuyerList';
 import SingleSellerProducts from './Components/SingleSellerProducts/SingleSellerProducts';
 import NavBar from './Components/NavBar/NavBar';
-
+import OrderItems from './Components/Oderspage/Oderspage';
+import ResetPassword from './Components/ResetPassword/ResetPassword';
 
 
 // import './App.css'
@@ -66,6 +67,10 @@ function App() {
       <Route path={'/BuyerList'} exact element={<BuyerList />} />
       <Route path={'/SingleSellerProducts'} exact element={<SingleSellerProducts />} />
       <Route path={'/NavBar'} exact element={<NavBar />} />
+      <Route path={'/OrderItems'} exact element={<OrderItems />} />
+      <Route path={'/ResetPassword'} exact element={<ResetPassword />} />
+
+
 
 
 

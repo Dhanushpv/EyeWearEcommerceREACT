@@ -45,6 +45,7 @@ router.get('/totalRevenue',userController.totalRevenue);
 router.get('/sellerDetails',userController.sellerDetails);
 router.get('/BuyerDetails',userController.BuyerDetails);
 router.get('/SingleSellerproducts/:userId',userController.SingleSellerproducts)
+router.get('/orderItems/:userId',userController.orderItems)
 
 
 
