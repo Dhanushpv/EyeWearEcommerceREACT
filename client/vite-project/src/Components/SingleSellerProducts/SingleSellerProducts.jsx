@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; // React Router for navigation
 import axios from "axios";
+import '../SingleSellerProducts/SingleSellerProducts.css'
 
 
 function SingleSellerProducts() {
@@ -61,7 +62,7 @@ function SingleSellerProducts() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full">
+    <div className="bg-zinc-100 h-full">
       <div className="fixed bg-white text-blue-800 px-10 py-1 z-10 w-full">
         <div className="flex items-center justify-between py-2 text-5x1">
           <div className="font-bold text-blue-900 text-xl">
@@ -93,56 +94,27 @@ function SingleSellerProducts() {
           </div>
         </div>
       </div>
-      <div className="px-5 pt-36">
-        <div id="SellerView" className="flex gap-3 flex-wrap">
-          {data.map((product) => (
-            <div className="card1" key={product._id}>
-              <div className="card-img1">
-                <img
-                  src={`http://localhost:3000/${product.images[0].url}`}
-                  alt={product.title}
-                  style={{ width: "100%", height: "25vh", borderRadius: "20px" }}
-                />
-              </div>
-              <div className="card-info1">
-                <p className="text-title">{product.title.slice(0,10)}</p>
-                <p className="text-body">{product.description.slice(0,50)}</p>
-                <span className="text-title">{product.price}</span>
-              </div>
-              <div className="card-footer1">
-                <div className="card-button1">
-                  <svg
-                    className="svg-icon"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M15.25 2.75l2 2c.292.292.292.768 0 1.06L6.31 16.75l-4.06.75.75-4.06L15.19 2.75c.292-.292.768-.292 1.06 0z" />
-                    <path d="M13 5l2 2" />
-                  </svg>
-                </div>
-                <div
-                  className="card-button1"
-                  onClick={() => handleRemove(product._id)}
-                >
-                  <svg
-                    className="svg-icon"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="red"
-                    stroke="red"
-                    strokeWidth="3"
-                  >
-                    <path d="M3 6h18M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6" />
-                  </svg>
-                </div>
-              </div>
+      <div className="px-5 pt-36 container">
+      <div id="SellerView" className="flex gap-3 flex-wrap justify-center">
+        {data.map((product) => (
+          <div className="card1" key={product._id}>
+            <div className="card-img1">
+              <img
+                src={`http://localhost:3000/${product.images[0].url}`}
+                alt={product.title}
+                style={{ width: "100%", height: "25vh", borderRadius: "20px" }}
+              />
             </div>
-          ))}
-        </div>
+            <div className="card-info1">
+              <p className="text-title">{product.title.slice(0, 10)}</p>
+              <p className="text-body">{product.description.slice(0, 50)}</p>
+              <span className="text-title">{product.price}</span>
+            </div>
+          </div>
+        ))}
       </div>
+    </div>
+
     </div>
   );
 }

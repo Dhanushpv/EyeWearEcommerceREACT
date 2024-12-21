@@ -26,6 +26,14 @@ exports.login = async function (req, res) {
 
         let dbUser = adminUser || regularUser;  // Determine if the user is admin or regular
 
+        if (dbUser?.isBlocked) {
+            return res.status(403).json({
+                success: false,
+                message: 'Your account has been blocked. Please contact support.'
+            });
+        }
+
+
         // If user (either admin or regular) is found
         if (dbUser) {
             const passwordMatch = bcrypt.compareSync(password, dbUser.password);

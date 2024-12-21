@@ -6,6 +6,13 @@ let AddData = require('../db/models/addProduct');
 const { success_function, error_function } = require('../utli/ResponseHandler');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken')
+const sendemail = require('../utli/send-email').sendEmail
+const resetpasswords = require('../utli/Email_template/resetPassword').resetPassword
+const orderplaced = require('../utli/Email_template/orderplaced').orderplaced
+const userBlockedTemplate = require('../utli/Email_template/Userblocke').userblocked;
+const dotevn = require('dotenv');
+dotevn.config();
 
 
 
@@ -985,10 +992,101 @@ exports.productupdation = async (req, res) => {
     }
 };
 
+// exports.buyNow = async (req, res) => {
+//     try {
+//         const { id: userId } = req.params;
+//         console.log("userId",userId)
+//         const products = req.body.products; // Array of products (productId, quantity)
+
+//         // Debugging logs
+//         console.log('Params:', req.params);
+//         console.log('Body:', req.body);
+
+//         // Validate inputs
+//         if (!userId || !products || !Array.isArray(products) || products.length === 0) {
+//             return res.status(400).json({ message: 'User ID and a list of products with quantities are required.' });
+//         }
+
+//         // Fetch the user
+//         const user = await users.findById(userId);
+//         if (!user) {
+//             return res.status(404).json({ message: 'User not found.' });
+//         }
+
+//         // Initialize variables for total order price and purchased products
+//         let totalOrderPrice = 0;
+//         let purchasedProducts = [];
+
+//         // Loop through each product in the order
+//         for (let productData of products) {
+//             const { productId, quantity } = productData;
+
+//             // Validate product data
+//             if (!productId || !quantity) {
+//                 return res.status(400).json({ message: 'Each product must have a valid Product ID and Quantity.' });
+//             }
+
+//             // Fetch the product
+//             const product = await AddData.findById(productId);
+//             if (!product) {
+//                 return res.status(404).json({ message: `Product with ID ${productId} not found.` });
+//             }
+
+//             // Check if enough stock is available
+//             if (product.stock < quantity) {
+//                 return res.status(400).json({ message: `Insufficient stock for ${product.name}. Only ${product.stock} items available.` });
+//             }
+
+//             // Calculate total price for the product
+//             const productTotalPrice = product.price * quantity;
+//             totalOrderPrice += productTotalPrice;
+
+//             // Update stock
+//             product.stock -= quantity;
+//             await product.save();
+
+//             // Add product details to the purchased list
+//             purchasedProducts.push({
+//                 productId: product._id,
+//                 quantity,
+//                 price: productTotalPrice,
+//                 purchaseDate: new Date(),
+//             });
+//         }
+
+//         // Check if user already has a buyNow field, and update it
+//         if (user.buyNow) {
+//             // Append the new products to the existing array in buyNow
+//             user.buyNow.products.push(...purchasedProducts);
+//             user.buyNow.totalPrice += totalOrderPrice; // Update the total price
+//             user.buyNow.purchaseDate = new Date(); // Update the purchase date
+//         } else {
+//             // If the user doesn't have a buyNow field, create one
+//             user.buyNow = {
+//                 products: purchasedProducts,
+//                 totalPrice: totalOrderPrice,
+//                 purchaseDate: new Date(),
+//             };
+//         }
+
+//         await user.save();
+
+//         // Respond with success
+//         res.status(200).json({
+//             message: 'Bulk purchase successful.',
+//             buyNow: user.buyNow,
+//             totalPrice: user.buyNow.totalPrice,
+//             purchasedProducts: purchasedProducts,
+//         });
+//     } catch (error) {
+//         console.error('Error in buyNow:', error);
+//         res.status(500).json({ message: 'Internal server error.' });
+//     }
+// };
+
 exports.buyNow = async (req, res) => {
     try {
         const { id: userId } = req.params;
-        console.log("userId",userId)
         const products = req.body.products; // Array of products (productId, quantity)
 
         // Debugging logs
@@ -1006,55 +1104,47 @@ exports.buyNow = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        // Initialize variables for total order price and purchased products
         let totalOrderPrice = 0;
         let purchasedProducts = [];
 
-        // Loop through each product in the order
+        // Loop through the products and process the order
         for (let productData of products) {
             const { productId, quantity } = productData;
 
-            // Validate product data
             if (!productId || !quantity) {
                 return res.status(400).json({ message: 'Each product must have a valid Product ID and Quantity.' });
             }
 
-            // Fetch the product
             const product = await AddData.findById(productId);
             if (!product) {
                 return res.status(404).json({ message: `Product with ID ${productId} not found.` });
             }
 
-            // Check if enough stock is available
             if (product.stock < quantity) {
                 return res.status(400).json({ message: `Insufficient stock for ${product.name}. Only ${product.stock} items available.` });
             }
 
-            // Calculate total price for the product
             const productTotalPrice = product.price * quantity;
             totalOrderPrice += productTotalPrice;
 
-            // Update stock
             product.stock -= quantity;
             await product.save();
 
-            // Add product details to the purchased list
             purchasedProducts.push({
                 productId: product._id,
+                name: product.name,
                 quantity,
                 price: productTotalPrice,
                 purchaseDate: new Date(),
             });
         }
 
-        // Check if user already has a buyNow field, and update it
+        // Update user's 'buyNow' field
         if (user.buyNow) {
-            // Append the new products to the existing array in buyNow
             user.buyNow.products.push(...purchasedProducts);
-            user.buyNow.totalPrice += totalOrderPrice; // Update the total price
-            user.buyNow.purchaseDate = new Date(); // Update the purchase date
+            user.buyNow.totalPrice += totalOrderPrice;
+            user.buyNow.purchaseDate = new Date();
         } else {
-            // If the user doesn't have a buyNow field, create one
             user.buyNow = {
                 products: purchasedProducts,
                 totalPrice: totalOrderPrice,
@@ -1063,6 +1153,17 @@ exports.buyNow = async (req, res) => {
         }
 
         await user.save();
+
+        // Prepare email template
+        const emailTemplate = await orderplaced(user.name, purchasedProducts, totalOrderPrice);
+
+        // Send the email using the sendEmail function
+        try {
+            await sendemail(user.email, 'Order Confirmation', emailTemplate);
+            console.log('Email sent successfully.');
+        } catch (emailError) {
+            console.error('Error sending email:', emailError);
+        }
 
         // Respond with success
         res.status(200).json({
@@ -1248,8 +1349,6 @@ exports.removeWishlist = async (req, res) => {
     }
 };
 
-
-
 exports.totalBuyers = async (req, res) => {
     try {
         // Step 1: Find the userType ID for "Buyer" from the userType collection
@@ -1428,9 +1527,6 @@ exports.SingleSellerproducts = async (req, res) => {
 
 }
 
-
-
-
 exports.orderItems = async (req, res) => {
     try {
         // Assuming the user's ID is available in the request (e.g., from authentication middleware)
@@ -1448,6 +1544,202 @@ exports.orderItems = async (req, res) => {
     } catch (error) {
         console.error('Error fetching orders:', error);
         res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.forgetPassword = async function (req, res) {
+    try {
+      let email = req.body.email;
+      if (email) {
+        let user = await users.findOne({ email: email });
+        console.log("user", user);
+  
+        if (user) {
+          let reset_token = jwt.sign(
+            { user_id: user._id },
+            process.env.PRIVATE_KEY,
+            { expiresIn: "10m" }
+          );
+  
+          console.log("Updating user with email:", email);
+          let data = await users.updateOne(
+            { email: email },
+            { $set: { password_token: reset_token } }
+          );
+          
+          console.log("Data after update:", data);
+  
+          if (data.matchedCount === 1 && data.modifiedCount == 1) {
+            let reset_link = `${process.env.FRONTEND_URL}?token=${reset_token}`;
+            let email_template = await resetpasswords(user.name, reset_link);
+            sendemail(email, "Forgot password", email_template);
+            let response = success_function({
+              status: 200,
+              message: "Email sent successfully",
+            });
+            res.status(response.statuscode).send(response);
+            return;
+          } else if (data.matchedCount === 0) {
+            console.log("No user found with email:", email);
+            let response = error_function({
+              status: 404,
+              message: "User not found",
+            });
+            res.status(response.statuscode).send(response);
+            return;
+          } else {
+            let response = error_function({
+              status: 400,
+              message: "Password reset failed",
+            });
+            res.status(response.statuscode).send(response);
+            return;
+          }
+        } else {
+          let response = error_function({ status: 403, message: "Check the Email" });
+          res.status(response.statuscode).send(response);
+          return;
+        }
+      } else {
+        let response = error_function({
+          status: 422,
+          message: "Email is required",
+        });
+        res.status(response.statuscode).send(response);
+        return;
+      }
+    } catch (error) {
+      console.log("Error in forgetPassword:", error);
+      let response = error_function({
+        status: 500,
+        message: "Internal Server Error",
+      });
+      res.status(response.statuscode).send(response);
+    }
+};
+
+exports.passwordResetController = async function (req, res) {
+    try {
+      const authHeader = req.headers["authorization"];
+      const token = authHeader.split(" ")[1];
+  
+      let password = req.body.password;
+      console.log("password :",password);
+
+      decoded = jwt.decode(token);
+      console.log("decode : ",decoded)
+ 
+      let user = await users.findOne({
+        $and: [{ _id: decoded.user_id }, { password_token: token }],
+      });
+      console.log("user",user)
+      if (user) {
+        let salt = bcrypt.genSaltSync(10);
+        let password_hash = bcrypt.hashSync(password, salt);
+        let data = await users.updateOne(
+          { _id: decoded.user_id },
+          { $set: { password: password_hash, password_token: null } }
+        );
+        if (data.matchedCount === 1 && data.modifiedCount == 1) {
+          let response = success_function({
+            status: 200,
+            message: "Password changed successfully",
+          });
+          res.status(response.statuscode).send(response);
+          return;
+        } else if (data.matchedCount === 0) {
+          let response = error_function({
+            status: 404,
+            message: "User not found",
+          });
+          res.status(response.statuscode).send(response);
+          return;
+        } else {
+          let response = error_function({
+            status: 400,
+            message: "Password reset failed",
+          });
+          res.status(response.statuscode).send(response);
+          return;
+        }
+      }else{
+        let response = error_function({ status: 403, message: "Forbidden" });
+      res.status(response.statuscode).send(response);
+      return;
+      }
+
+      
+    }  catch (error) {
+      console.log("error : ", error);
+      let response = error_function({
+          success: false,
+          statuscode: 400,
+          message: "error"
+      })
+      res.status(response.statuscode).send(response)
+      return;
+    }
+};
+
+// exports.toggleBlockSeller = async (req, res) => {
+//     const { id } = req.params; // Get seller ID from URL
+//     const { isBlocked } = req.body; // Get the block status from request body
+
+//     try {
+//         const seller = await users.findById(id);
+
+//         if (!seller) {
+//             return res.status(404).json({ message: "Seller not found" });
+//         }
+
+//         seller.isBlocked = isBlocked; // Update block status
+//         await seller.save();
+
+//         res.status(200).json({
+//             message: `Seller ${isBlocked ? "blocked" : "unblocked"} successfully`,
+//             seller,
+//         });
+//     } catch (error) {
+//         res.status(500).json({ message: "Error updating block status", error });
+//     }
+// };
+
+exports.toggleBlockSeller = async (req, res) => {
+    const { id } = req.params; // Get seller ID from URL
+    const { isBlocked } = req.body; // Get the block status from request body
+
+    try {
+        const seller = await users.findById(id);
+
+        if (!seller) {
+            return res.status(404).json({ message: "Seller not found" });
+        }
+
+        seller.isBlocked = isBlocked; // Update block status
+        await seller.save();
+
+        // Prepare and send email notification
+        const emailSubject = isBlocked
+            ? "Your account has been blocked"
+            : "Your account has been unblocked";
+
+        const emailBody = userBlockedTemplate({
+            name: seller.name,
+            status: isBlocked ? "blocked" : "unblocked",
+        });
+
+        await sendemail({
+            to: seller.email,
+            subject: emailSubject,
+            html: emailBody,
+        });
+
+        res.status(200).json({
+            message: `Seller ${isBlocked ? "blocked" : "unblocked"} successfully`,
+            seller,
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating block status", error });
     }
 };
 

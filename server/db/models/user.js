@@ -137,7 +137,14 @@ const users = new mongoose.Schema({
             type: Date,
             default: Date.now,
         },
-    }
+    },
+    password_token:{
+        type : String
+    },
+    isBlocked: {
+        type: Boolean,
+        default: false, // New sellers are not blocked by default
+    },
     
 });
 

@@ -172,7 +172,7 @@ function OrderItems() {
     
 
     return (
-        <div className="max-w-4xl mx-auto h-screen">
+        <div className="max-w-4xl mx-auto h-full">
             <div className="flex items-center mb-4">
                 <input
                     className="flex-grow p-2 border border-gray-300 rounded-md"

@@ -94,11 +94,16 @@ function AdminPanel() {
   let chartInstance = null; // Declare the chart instance globally
 
   function renderChart(labels, sales) {
-    const ctx = document.getElementById("bestSellerChart").getContext("2d");
+    const canvas = document.getElementById("bestSellerChart");
+    const ctx = canvas.getContext("2d");
+    // const ctx = document.getElementById("bestSellerChart").getContext("2d");
 
     if (chartInstance) {
       chartInstance.destroy(); // Destroy the previous chart if it exists
     }
+
+    canvas.width = 400;
+    canvas.height = 400;
 
     chartInstance = new Chart(ctx, {
       type: "bar", // Example chart type
@@ -152,14 +157,8 @@ const BuyerList = () => {
     <div className="flex">
       {/* Sidebar */}
       <div className="w-64 bg-white h-screen shadow-md">
-        <div className="p-6">
-          <img
-            alt="Pixel Commerce Logo"
-            className="mb-6"
-            height={50}
-            src="https://storage.googleapis.com/a1aa/image/FTv75SVGCfViUazyfYtFQterwca1vlMNPIc9emwB5p2fFaOfE.jpg"
-            width={100}
-          />
+        <div className="p-6 pb-5">
+          <h1 className="text-5xl pb-5">NOVA</h1>
           <ul>
             <li className="mb-4">
               <a className="flex items-center text-teal-500" href="#">
@@ -278,9 +277,16 @@ const BuyerList = () => {
             
           </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 ">
-          <canvas id="bestSellerChart" className="w-1/2 h-1/2" width="6000" height="6000"></canvas>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="flex justify-center items-center">
+            <canvas
+              id="bestSellerChart"
+              style={{ width: "400px", height: "400px" }} // Inline styles for better control
+            ></canvas>
+          </div>
         </div>
+
+
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ function Login() {
             let token = token_data.token;
             let id = token_data.id;
             let token_key = id;
+            let isBlocked = token_data.isBlocked; 
 
             // Store data in localStorage
             localStorage.setItem(token_key, token);
@@ -35,6 +36,13 @@ function Login() {
             // Update state for login success
             setIsLoggedIn(true);
             setUserType(usertype);
+
+           if (isBlocked) {
+            return res.status(403).json({
+                success: false,
+                message: 'Your account has been blocked. Please contact support.'
+            });
+        }
 
             // Redirect based on user type
             if (usertype === "Admin") {

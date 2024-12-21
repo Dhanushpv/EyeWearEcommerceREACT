@@ -33,6 +33,7 @@ import SingleSellerProducts from './Components/SingleSellerProducts/SingleSeller
 import NavBar from './Components/NavBar/NavBar';
 import OrderItems from './Components/Oderspage/Oderspage';
 import ResetPassword from './Components/ResetPassword/ResetPassword';
+import PasswordReset from './Components/PasswordReset/PasswordReset';
 
 
 // import './App.css'
@@ -69,6 +70,10 @@ function App() {
       <Route path={'/NavBar'} exact element={<NavBar />} />
       <Route path={'/OrderItems'} exact element={<OrderItems />} />
       <Route path={'/ResetPassword'} exact element={<ResetPassword />} />
+      <Route path={'/forgotPassword'} exact element={<PasswordReset />} />
+
+
+
 
 
 

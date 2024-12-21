@@ -1,0 +1,71 @@
+/* Main container */
+#SellerView {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+  }
+  
+  /* Card styling */
+  .card1 {
+    /* flex: 1 1 calc(33.333% - 20px); 3 cards per row */
+    max-width: calc(33.333% - 20px);
+    background-color: #f9f9f9;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    margin-bottom: 20px;
+    transition: transform 0.3s;
+  }
+  
+  .card1:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Card image styling */
+  .card-img1 img {
+    width: 100%;
+    height: auto;
+    border-radius: 20px;
+  }
+  
+  /* Text styles */
+  .text-title {
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  
+  .text-body {
+    font-size: 0.9rem;
+    color: #555;
+  }
+  
+  /* Media Queries */
+  @media (max-width: 1024px) {
+    .card1 {
+      flex: 1 1 calc(50% - 20px); /* 2 cards per row */
+      max-width: calc(50% - 20px);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .card1 {
+      flex: 1 1 calc(100% - 20px); /* 1 card per row */
+      max-width: calc(100% - 20px);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .card1 {
+      flex: 1 1 100%;
+    }
+  
+    .text-body {
+      font-size: 0.8rem;
+    }
+  
+    .text-title {
+      font-size: 1rem;
+    }
+  }
+  

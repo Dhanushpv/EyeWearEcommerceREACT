@@ -44,8 +44,11 @@ router.get('/totalorders',userController.totalorders);
 router.get('/totalRevenue',userController.totalRevenue);
 router.get('/sellerDetails',userController.sellerDetails);
 router.get('/BuyerDetails',userController.BuyerDetails);
-router.get('/SingleSellerproducts/:userId',userController.SingleSellerproducts)
-router.get('/orderItems/:userId',userController.orderItems)
+router.get('/SingleSellerproducts/:userId',userController.SingleSellerproducts);
+router.get('/orderItems/:userId',userController.orderItems);
+router.post('/forgot_password',userController.forgetPassword);
+router.post('/passwordResetController',userController.passwordResetController);
+router.put('/toggleBlockSeller/:id',userController.toggleBlockSeller)
 
 
 
