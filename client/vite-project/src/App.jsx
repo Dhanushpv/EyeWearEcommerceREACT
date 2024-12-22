@@ -34,6 +34,7 @@ import NavBar from './Components/NavBar/NavBar';
 import OrderItems from './Components/Oderspage/Oderspage';
 import ResetPassword from './Components/ResetPassword/ResetPassword';
 import PasswordReset from './Components/PasswordReset/PasswordReset';
+import Userdetails from './Components/Userdetails/Userdetails';
 
 
 // import './App.css'
@@ -71,6 +72,9 @@ function App() {
       <Route path={'/OrderItems'} exact element={<OrderItems />} />
       <Route path={'/ResetPassword'} exact element={<ResetPassword />} />
       <Route path={'/forgotPassword'} exact element={<PasswordReset />} />
+      <Route path={'/Userdetails'} exact element={<Userdetails />} />
+      
+
 
 
 

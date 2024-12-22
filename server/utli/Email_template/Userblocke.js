@@ -1,10 +1,12 @@
-exports.userblocked = function (Name,discription) {
+exports.userblocked = function (name, reason, isBlocked) {
     return new Promise(async (resolve, reject) => {
         try {
-            // Create the product list HTML dynamically
-           
+            // Set the email subject based on whether the account is blocked or unblocked
+            const emailSubject = isBlocked
+                ? "Your account has been blocked"
+                : "Your account has been unblocked";
 
-            // Generate the email template
+            // Construct the email template
             let template = `
                <html>
                 <head>
@@ -15,6 +17,7 @@ exports.userblocked = function (Name,discription) {
                             display: flex;
                             justify-content: center;
                             align-items: center;
+                            flex-direction: column;
                             height: 100vh;
                             margin: 0;
                             background-color: #fff;
@@ -66,10 +69,13 @@ exports.userblocked = function (Name,discription) {
                 </head>
                 <body>
                     <div class="container">
-                        <h1>Access blocked: Your institution’s admin needs to review eLearning App</h1>
-                        <p>You can't access this app until an admin at your institution reviews and configures access for it. If you need access to this app,</p>
+                        <h1>${emailSubject}</h1>
+                        <p>Hello ${name},</p>
+                        <p>Your access to the NOVA has been ${isBlocked ? 'blocked' : 'unblocked'} by your institution's administrator. The reason for this action is:</p>
+                        <p><strong>${reason || 'No specific reason provided.'}</strong></p>
+                        <p>If you need to request access or have any questions regarding this action, please click below:</p>
                         <p class="request-access"><a href="#">Request Access</a></p>
-                        <p>If you are a developer of eLearning App, see <a href="#">error details</a>.</p>
+                        <p>If you are a developer of the NOVA, please refer to the <a href="#">error details</a>.</p>
                         <p>Error 400: access_not_configured</p>
                     </div>
                     <div class="footer">
@@ -81,7 +87,6 @@ exports.userblocked = function (Name,discription) {
                 </body>
                 </html>
             `;
-
             resolve(template);
         } catch (error) {
             reject(error);

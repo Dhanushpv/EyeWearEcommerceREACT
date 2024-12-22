@@ -10,7 +10,7 @@ const jwt = require('jsonwebtoken')
 const sendemail = require('../utli/send-email').sendEmail
 const resetpasswords = require('../utli/Email_template/resetPassword').resetPassword
 const orderplaced = require('../utli/Email_template/orderplaced').orderplaced
-const userBlockedTemplate = require('../utli/Email_template/Userblocke').userblocked;
+const userblocked = require('../utli/Email_template/Userblocke').userblocked;
 const dotevn = require('dotenv');
 dotevn.config();
 
@@ -1623,24 +1623,45 @@ exports.passwordResetController = async function (req, res) {
       const authHeader = req.headers["authorization"];
       const token = authHeader.split(" ")[1];
   
-      let password = req.body.password;
-      console.log("password :",password);
-
-      decoded = jwt.decode(token);
-      console.log("decode : ",decoded)
- 
-      let user = await users.findOne({
+      const { password, confirmPassword } = req.body;
+  
+      if (!password || !confirmPassword) {
+        let response = error_function({
+          status: 400,
+          message: "Password and confirm password are required",
+        });
+        res.status(response.statuscode).send(response);
+        return;
+      }
+  
+      if (password !== confirmPassword) {
+        let response = error_function({
+          status: 400,
+          message: "Passwords do not match",
+        });
+        res.status(response.statuscode).send(response);
+        return;
+      }
+  
+      const decoded = jwt.decode(token);
+      console.log("Decoded: ", decoded);
+  
+      const user = await users.findOne({
         $and: [{ _id: decoded.user_id }, { password_token: token }],
       });
-      console.log("user",user)
+  
+      console.log("User:", user);
+  
       if (user) {
-        let salt = bcrypt.genSaltSync(10);
-        let password_hash = bcrypt.hashSync(password, salt);
-        let data = await users.updateOne(
+        const salt = bcrypt.genSaltSync(10);
+        const password_hash = bcrypt.hashSync(password, salt);
+  
+        const data = await users.updateOne(
           { _id: decoded.user_id },
           { $set: { password: password_hash, password_token: null } }
         );
-        if (data.matchedCount === 1 && data.modifiedCount == 1) {
+  
+        if (data.matchedCount === 1 && data.modifiedCount === 1) {
           let response = success_function({
             status: 200,
             message: "Password changed successfully",
@@ -1662,84 +1683,160 @@ exports.passwordResetController = async function (req, res) {
           res.status(response.statuscode).send(response);
           return;
         }
-      }else{
+      } else {
         let response = error_function({ status: 403, message: "Forbidden" });
-      res.status(response.statuscode).send(response);
-      return;
+        res.status(response.statuscode).send(response);
+        return;
       }
-
-      
-    }  catch (error) {
-      console.log("error : ", error);
+    } catch (error) {
+      console.log("Error:", error);
       let response = error_function({
-          success: false,
-          statuscode: 400,
-          message: "error"
-      })
-      res.status(response.statuscode).send(response)
+        success: false,
+        statuscode: 400,
+        message: "An error occurred",
+      });
+      res.status(response.statuscode).send(response);
       return;
     }
 };
-
-// exports.toggleBlockSeller = async (req, res) => {
-//     const { id } = req.params; // Get seller ID from URL
-//     const { isBlocked } = req.body; // Get the block status from request body
-
-//     try {
-//         const seller = await users.findById(id);
-
-//         if (!seller) {
-//             return res.status(404).json({ message: "Seller not found" });
-//         }
-
-//         seller.isBlocked = isBlocked; // Update block status
-//         await seller.save();
-
-//         res.status(200).json({
-//             message: `Seller ${isBlocked ? "blocked" : "unblocked"} successfully`,
-//             seller,
-//         });
-//     } catch (error) {
-//         res.status(500).json({ message: "Error updating block status", error });
-//     }
-// };
-
+  
 exports.toggleBlockSeller = async (req, res) => {
-    const { id } = req.params; // Get seller ID from URL
-    const { isBlocked } = req.body; // Get the block status from request body
+    const { id } = req.params;  // Get seller ID from URL
+    const { isBlocked, reason } = req.body;  // Get block status and reason from request body
+
+    // Log incoming data
+    console.log("Received request to block/unblock seller with ID:", id);
+    console.log("Request Body:", req.body);  // Log the entire body for debugging
+
+    if (isBlocked === undefined || reason === undefined) {
+        return res.status(400).json({ message: "Block status or reason is missing" });
+    }
 
     try {
+        // Find the seller by ID
         const seller = await users.findById(id);
 
         if (!seller) {
+            console.error(`Seller not found with ID: ${id}`);
             return res.status(404).json({ message: "Seller not found" });
         }
 
-        seller.isBlocked = isBlocked; // Update block status
-        await seller.save();
+        // Update the block status
+        seller.isBlocked = isBlocked;
+
+        // Save the updated seller
+        const updatedSeller = await seller.save();
+        console.log(`Seller status updated successfully: ${updatedSeller.isBlocked}`);
+        console.log(`Updated seller:`, updatedSeller);
 
         // Prepare and send email notification
         const emailSubject = isBlocked
             ? "Your account has been blocked"
             : "Your account has been unblocked";
 
-        const emailBody = userBlockedTemplate({
-            name: seller.name,
-            status: isBlocked ? "blocked" : "unblocked",
-        });
+            const emailBody = await userblocked(seller.name, reason, isBlocked);
 
-        await sendemail({
-            to: seller.email,
-            subject: emailSubject,
-            html: emailBody,
-        });
 
+        try {
+            await sendemail(seller.email, emailSubject, emailBody,);
+            console.log('Email sent successfully.');
+        } catch (emailError) {
+            console.error('Error sending email:', emailError);
+        }
+
+        // Return a successful response
         res.status(200).json({
             message: `Seller ${isBlocked ? "blocked" : "unblocked"} successfully`,
-            seller,
+            seller: updatedSeller,
         });
     } catch (error) {
-        res.status(500).json({ message: "Error updating block status", error });
+        console.error("Error updating block status:", error);
+        res.status(500).json({ message: "Error updating block status", error: error.message });
     }
 };
+
+exports.singleuserCartitems = async (req, res) => {
+    try {
+        // Get the user ID from the request (e.g., req.params or req.body)
+        const userId = req.params.userId;
+
+        // Find the user by ID and fetch their cart items
+        const user = await users.findById(userId).select('addCart');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Return the cart items
+        res.status(200).json({ success: true, cartItems: user.addCart });
+    } catch (error) {
+        console.error('Error fetching user cart items:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+exports.singleuserwishlist = async (req, res) => {
+    try {
+        // Get the user ID from the request parameters
+        const userId = req.params.userId;
+
+        // Find the user by ID and fetch their wishlist
+        const user = await users.findById(userId).select('wishlist');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Return the wishlist items
+        res.status(200).json({ success: true, wishlist: user.wishlist });
+    } catch (error) {
+        console.error('Error fetching user wishlist items:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+exports.singleuserbuyNow = async (req, res) => {
+    try {
+        // Get the user ID from the request parameters
+        const userId = req.params.userId;
+
+        // Find the user by ID and fetch their buyNow items
+        const user = await users.findById(userId).select('buyNow');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Return the buyNow items
+        res.status(200).json({ success: true, buyNow: user.buyNow });
+    } catch (error) {
+        console.error('Error fetching user buyNow items:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+exports.singleuseraddress = async (req, res) => {
+    try {
+        // Get the user ID from the request parameters
+        const userId = req.params.userId;
+
+        // Find the user by ID and fetch their address
+        const user = await users.findById(userId).select('address');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Return the address
+        res.status(200).json({ success: true, address: user.address });
+    } catch (error) {
+        console.error('Error fetching user address:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+
+
+
+
 

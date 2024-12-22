@@ -48,7 +48,15 @@ router.get('/SingleSellerproducts/:userId',userController.SingleSellerproducts);
 router.get('/orderItems/:userId',userController.orderItems);
 router.post('/forgot_password',userController.forgetPassword);
 router.post('/passwordResetController',userController.passwordResetController);
-router.put('/toggleBlockSeller/:id',userController.toggleBlockSeller)
+router.put('/toggleBlockSeller/:id',userController.toggleBlockSeller);
+router.get('/singleuserCartitems/:userId',userController.singleuserCartitems);
+router.get('/singleuserwishlist/:userId',userController.singleuserwishlist);
+router.get('/singleuserbuyNow/:userId',userController.singleuserbuyNow);
+router.get('/singleuseraddress/:userId',userController.singleuseraddress);
+
+
+
+
 
 
 

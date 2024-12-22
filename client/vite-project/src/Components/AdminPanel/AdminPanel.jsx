@@ -16,22 +16,21 @@ function AdminPanel() {
   const [totalBuyer, setTotalBuyer] = useState(0); // State for total seller count
   const [totalOrders, setTotalOrders] = useState(0); // State for total seller count
   const [totalRevenue, setTotalRevenue] = useState(0); // State for total seller count
+  const [BestSeller, setBestSeller] = useState(0); // State for total seller count
+
+
 
   // Fetch best-seller data for the chart
   async function fetchBestSellerData() {
     try {
       const response = await axios.get("http://localhost:3000/bestseller");
       const data = response.data;
+    
 
       console.log("Raw response data:", data); // Inspect the structure
 
-      if (data && typeof data === "object") {
-        const labels = [data.description]; // Use the description as labels
-        const sales = [data.totalQuantity]; // Use totalQuantity as sales
-        renderChart(labels, sales);
-      } else {
-        console.error("Expected an object with product data, but got:", data);
-      }
+        setBestSeller(data)
+    
     } catch (error) {
       console.error("Error fetching best-seller data:", error);
     }
@@ -278,12 +277,32 @@ const BuyerList = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="flex justify-center items-center">
-            <canvas
-              id="bestSellerChart"
-              style={{ width: "400px", height: "400px" }} // Inline styles for better control
-            ></canvas>
-          </div>
+        <h2 className="text-2xl font-bold mb-4 mt-10">Best Seller</h2>
+        <div className="flex gap-3 flex-wrap justify-center pt-6">
+        {BestSeller ? (
+  <div className="">
+    <div className="">
+      <img
+        src={`http://localhost:3000/${BestSeller.images[0].url}`}
+        alt={BestSeller.title}
+        style={{
+          // width: "100%",
+          // height: "25vh",
+          borderRadius: "20px",
+        }}
+      />
+    </div>
+    <div className="">
+      {/* <p className="text-title">{BestSeller.title.slice(0, 20) + "..."}</p> */}
+      <p className="text-body">{BestSeller.description.slice(0, 20)}</p>
+      <span className="text-title">{BestSeller.price}</span>
+    </div>
+  </div>
+) : (
+  <p>No wishlist items available</p>
+)}
+
+        </div>
         </div>
 
 
