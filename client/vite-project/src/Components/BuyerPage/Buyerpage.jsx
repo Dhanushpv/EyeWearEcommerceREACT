@@ -5,7 +5,11 @@ import axios from "axios";
 // import '../BuyerPage/Buyerpage.css'
 
 function BuyerPage() {
-
+    let params = new URLSearchParams(window.location.search);
+        let token_key = params.get('login');
+        let userId = params.get('id')
+        let token = localStorage.getItem(token_key);
+       
     const [buyerProfile, setBuyerProfile] = useState(null);
     const [productList, setProductList] = useState([]);
     const [error, setError] = useState("");
@@ -326,8 +330,95 @@ function BuyerPage() {
         }
     };
     
+    
+    const handleClickAcoount = ()=>{
+        navigate(`/BuyerAccount?login=${token_key}&id=${userId}`)
+    }
+
+    const handleClickMebership = ()=>{
+        navigate(`/Mebership?login=${token_key}&id=${userId}`)
+    }
+    let isRequestInProgress = false;
+    async function wishList(productId, title, price) {
+        if (isRequestInProgress) return; // Prevent multiple API calls
+        isRequestInProgress = true;
+    
+        try {
+            console.log("Toggling wishlist:", productId, title, price);
+    
+            // Extract userId and token from the query parameters
+            const params = new URLSearchParams(window.location.search);
+            const userId = params.get('id');
+            const token_key = params.get('login');
+    
+            // Validate required parameters
+            if (!userId || !token_key) {
+                alert('User not logged in. Please log in to add items to the wishlist.');
+                return;
+            }
+    
+            // Retrieve token from localStorage
+            const token = localStorage.getItem(token_key);
+            if (!token) {
+                alert('Authorization token not found. Please log in again.');
+                return;
+            }
+    
+            // Check the current status of the product in the wishlist
+            const statusResponse = await axios.get(
+                'http://localhost:3000/status',
+                {
+                    params: {
+                        userId,
+                        productId,
+                    },
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
+    
+            // Handle response based on wishlist status
+            const isInWishlist = statusResponse.data.isInWishlist;
+    
+            // Make the API call to either add or remove the product from wishlist
+            const actionResponse = await axios.post(
+                'http://localhost:3000/addtowishlist',
+                {
+                    productId,
+                    title,
+                    price,
+                    userId,
+                    action: isInWishlist ? 'remove' : 'add', // Determine whether to add or remove
+                }
+               
+            );
+    
+            // Handle successful response
+            if (actionResponse.data.success) {
+                alert(isInWishlist ? 'Item removed from the wishlist!' : 'Item successfully added to the wishlist!');
+                console.log('Wishlist action response:', actionResponse.data);
+    
+                // Update the icon's color based on whether the item is in the wishlist
+                const icon = document.querySelector(`#wishlist-icon-${productId}`);
+                if (icon) {
+                    icon.style.color = isInWishlist ? 'initial' : 'red'; // Red if added to wishlist
+                    icon.title = isInWishlist ? 'Add to Wishlist' : 'Added to Wishlist'; // Tooltip
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling wishlist:', error);
+            alert(error.response?.data?.message || 'Error toggling item in wishlist.');
+        } finally {
+            isRequestInProgress = false;
+        }
+    }
 
     
+    
+    const CartClick = ()=>{
+        navigate(`/GoToCart?login=${token_key}&id=${userId}`)
+    }
     
     return (
         <>
@@ -427,27 +518,44 @@ function BuyerPage() {
                                 </div>
                             </div>
                             <div className="pt-2">
-                                {buyerProfile ? (
-                                    <div
-                                        className="text-center dropdown"
-                                        dangerouslySetInnerHTML={{
-                                            __html: `
-                                                <button class="dropbtn" aria-haspopup="true" role="button">
-                                                    <span class="text-break"><strong>Hello,</strong> ${buyerProfile.name}</span><br>
-                                                    <span><strong>Account & Lists</strong></span>
-                                                </button>
-                                                <div class="dropdown-content pt-3" role="menu" style="text-align: left;">
-                                                    <span class="dropdown-item pt-3" tabindex="0">Your Account</span>
-                                                    <span class="dropdown-item pt-3" tabindex="0">Your Orders</span>
-                                                    <span class="dropdown-item pt-3" tabindex="0">Your Wish List</span>
-                                                    <span class="dropdown-item pt-3 pb-3" tabindex="0">Memberships & Subscriptions</span>
-                                                </div>
-                                            `,
-                                        }}
-                                    />
-                                ) : null}
+                            {buyerProfile ? (
+                                <div className="text-center dropdown">
+                                    <button className="dropbtn" aria-haspopup="true" role="button">
+                                        <span className="text-break">
+                                            <strong>Hello,</strong> {buyerProfile.name}
+                                        </span>
+                                        <br />
+                                        <span>
+                                            <strong>Account & Lists</strong>
+                                        </span>
+                                    </button>
+                                    <div className="dropdown-content pt-3" role="menu" style={{ textAlign: "left" }}>
+                                        <span onClick={handleClickAcoount} className="dropdown-item pt-3" tabIndex="0">
+                                            Your Account
+                                        </span>
+
+                                        <span onClick={handleClickMebership} className="dropdown-item pt-3 pb-3" tabIndex="0">Memberships & Subscriptions</span>
+                                    </div>
+                                </div>
+                            ) : null}
+                        </div>
+
+                            <div className="loginSection"> <button
+                                            className="btn btn-danger"
+                                            onClick={() => {
+                                                // Clear the token from localStorage
+                                                let params = new URLSearchParams(window.location.search);
+                                                let token_key = params.get('login');
+                                                localStorage.removeItem(token_key);
+
+                                                // Navigate to the login page
+                                                navigate('/');
+                                            }}
+                                        >
+                                            Logout
+                                        </button>
                             </div>
-                            <div className="loginSection"></div>
+                            <div onClick={CartClick} className="px-3"><img className="w-24 h-24" style={{ width: "30px", height:"30px" }} src="https://img.icons8.com/?size=100&id=NUcpUMIcTSZ3&format=png&color=000000" alt="" /></div>
                         </div>
                     </div>
                 </nav>
@@ -536,7 +644,7 @@ function BuyerPage() {
                                             <li>
                                                 <div className="card">
                                                     <div
-                                                        className="card__image relative h-32 w-32" onClick={() => handleSingleView(product._id)}
+                                                        className="card__image relative h-32 w-32"
                                                         style={{
                                                             backgroundImage: `url(http://localhost:3000/${firstImageUrl})`,
                                                             backgroundPosition: 'center',
@@ -547,7 +655,7 @@ function BuyerPage() {
                                                         }}
                                                         title={firstImageAlt}
                                                     >
-                                                        <div className="absolute top-0 right-0 h-16 w-16 px-3 pt-3">
+                                                        <div onClick={() => wishList(product._id, product.title, product.price)} className="absolute top-0 right-0 h-16 w-16 px-3 pt-3">
                                                             <label className="ui-like p-2 ">
                                                                 <input type="checkbox" />
                                                                 <div className="like">
@@ -571,8 +679,8 @@ function BuyerPage() {
                                                         <div className="card__header d-flex justify-content-between align-items-center">
                                                             <div className="card__header-text">
                                                                 <div onClick={() => handleSingleView(product._id)}>
-                                                                    <h3 className="card__title">{product.title.slice(0, 27)}</h3>
-                                                                    <div className="card__status fs-5">₹{product.price}</div>
+                                                                    <h3  onClick={() => handleSingleView(product._id)} className="card__title">{product.title.slice(0, 27)}</h3>
+                                                                    <div  onClick={() => handleSingleView(product._id)} className="card__status fs-5">₹{product.price}</div>
                                                                 </div>
                                                             </div>
                                                             <div>
@@ -658,7 +766,7 @@ function BuyerPage() {
                                                                     <button
                                                                         type="button"
                                                                         className="btn btn-primary"
-                                                                        onClick={() => alert(`Adding ${product.title} to cart`)}
+                                                                        onClick={() => AddtoCart(product._id, product.price, 1)}
                                                                     >
                                                                         Add to Cart
                                                                     </button>

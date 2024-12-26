@@ -4,9 +4,7 @@ import axios from 'axios';
 
 
 
-function AcountPage() {
-  
-    
+function BuyerAccount() {
     const navigate = useNavigate();
     let params = new URLSearchParams(window.location.search);
     let id = params.get('id');
@@ -29,21 +27,10 @@ function AcountPage() {
     const orederItemsPageClick = () => {
         navigate (`/OrderItems?login=${token_key}&id=${id}`)
     };
+    let MyAcount = () => {
+        navigate(`/AcountPage?login=${token_key}&id=${id}`);
+    };
 
-  
-
-    const [user, setUser] = useState(null);
-    const [productList, setProductList] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    const [buyerProfile, setBuyerProfile] = useState(null);
-
-    const [error, setError] = useState("");
-    const [mensGlasses, setMensGlasses] = useState([]);
-    const [filteredProducts, setFilteredProducts] = useState([]);
-
-    const [searchQuery, setSearchQuery] = useState("");
-    const [isCanvasOpen, setIsCanvasOpen] = useState(false);
     useEffect(() => {
         async function fetchUserDetails() {
             let params = new URLSearchParams(window.location.search);
@@ -74,127 +61,7 @@ function AcountPage() {
 
         fetchUserDetails();
     }, []);
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    if (error) {
-        return <div>{error}</div>;
-    }
-
-    // Function to navigate to SingleView page with necessary data
-    let SingleView = (productId) => {
-        let params = new URLSearchParams(window.location.search);
-        let token_key = params.get('login');
-        let token = localStorage.getItem(token_key);
         
-
-        navigate(`/SingleView/${productId}`, {
-            state: {
-                id: productId,
-                userId: user._id,  // Pass the user ID here
-                token
-            }
-        });
-    };
-
-    let handleSingleView = (productId) => {
-        SingleView(productId);
-    };
-    let MyAcount = () => {
-        navigate(`/AcountPage?login=${token_key}&id=${id}`);
-    };
-
-    let AddtoCartpage = (productId, price, quantity) => {
-        console.log("productId", productId);
-        navigate(`/AddtoCartPage?productId=${productId}&userId=${id}&price=${price}&quantity=${quantity}`);
-    };
-
-    let isRequestInProgress = false;
-
-    async function wishList(productId, title, price) {
-        if (isRequestInProgress) return; // Prevent multiple API calls
-        isRequestInProgress = true;
-    
-        try {
-            console.log("Toggling wishlist:", productId, title, price);
-    
-            // Extract userId and token from the query parameters
-            const params = new URLSearchParams(window.location.search);
-            const userId = params.get('id');
-            const token_key = params.get('login');
-    
-            // Validate required parameters
-            if (!userId || !token_key) {
-                alert('User not logged in. Please log in to add items to the wishlist.');
-                return;
-            }
-    
-            // Retrieve token from localStorage
-            const token = localStorage.getItem(token_key);
-            if (!token) {
-                alert('Authorization token not found. Please log in again.');
-                return;
-            }
-    
-            // Check the current status of the product in the wishlist
-            const statusResponse = await axios.get(
-                'http://localhost:3000/status',
-                {
-                    params: {
-                        userId,
-                        productId,
-                    },
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
-    
-            // Handle response based on wishlist status
-            const isInWishlist = statusResponse.data.isInWishlist;
-    
-            // Make the API call to either add or remove the product from wishlist
-            const actionResponse = await axios.post(
-                'http://localhost:3000/addtowishlist',
-                {
-                    productId,
-                    title,
-                    price,
-                    userId,
-                    action: isInWishlist ? 'remove' : 'add', // Determine whether to add or remove
-                },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`, // Include token
-                    },
-                }
-            );
-    
-            // Handle successful response
-            if (actionResponse.data.success) {
-                alert(isInWishlist ? 'Item removed from the wishlist!' : 'Item successfully added to the wishlist!');
-                console.log('Wishlist action response:', actionResponse.data);
-    
-                // Update the icon's color based on whether the item is in the wishlist
-                const icon = document.querySelector(`#wishlist-icon-${productId}`);
-                if (icon) {
-                    icon.style.color = isInWishlist ? 'initial' : 'red'; // Red if added to wishlist
-                    icon.title = isInWishlist ? 'Add to Wishlist' : 'Added to Wishlist'; // Tooltip
-                }
-            }
-        } catch (error) {
-            console.error('Error toggling wishlist:', error);
-            alert(error.response?.data?.message || 'Error toggling item in wishlist.');
-        } finally {
-            isRequestInProgress = false;
-        }
-    }
-    
-
-    
     const handleMouseEnter = async () => {
         try {
             const response = await axios.get("http://localhost:3000/fetchMensglass");
@@ -361,7 +228,14 @@ function AcountPage() {
         setIsHovering(false);
     };
 
+ const [user, setUser] = useState(null);
+    const [productList, setProductList] = useState([]);
 
+
+    const [filteredProducts, setFilteredProducts] = useState([]);
+
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isCanvasOpen, setIsCanvasOpen] = useState(false);
     const handleSearchChange = async (event) => {
         const query = event.target.value.trim(); // Trim spaces
         setSearchQuery(query); // Update the state
@@ -385,14 +259,19 @@ function AcountPage() {
             setFilteredProducts([]); // Clear results on error
         }
     };
-
-
+    
+    let AddtoCartpage = () => {
+        // console.log("productId", productId);
+        navigate(`/AddtoCartPage`);
+    };
+    
     return (
-        <><div className="bg-gray-800 text-center">
+        <>
+       <div>
+           <nav className="pb-3">
+                    <div className="bg-gray-800 text-center">
                         FREE SHIPPING ON ORDERS OVER $75
                     </div>
-            <nav className="pb-3 flex justify-center items-center">
-                   
                     <div className="flex  items-center container pt-3">
                         <div className="text-center">
                             <span className="logo_sub1">NO</span>
@@ -495,15 +374,9 @@ function AcountPage() {
                                     <span onClick={MyAcount} className="dropdown-item">
                                         Your Account
                                     </span>
-                                    <span onClick={() => alert('Your Orders clicked')} className="dropdown-item">
-                                        Your Orders
-                                    </span>
-                                    <span onClick={() => alert('Your Wish List clicked')} className="dropdown-item">
-                                        Your Wish List
-                                    </span>
-                                    <span onClick={() => alert('Your Seller Account clicked')} className="dropdown-item">
-                                        Your Seller Account                                    </span>
-                                    <span onClick={() => alert('Memberships clicked')} className="dropdown-item">
+                                   
+                                   
+                                    <span  className="dropdown-item">
                                         Memberships & Subscriptions
                                     </span>
 
@@ -536,6 +409,7 @@ function AcountPage() {
                         </div>
                     </div>
                 </nav>
+
                 <div
         className="z-40 "
         style={{
@@ -573,6 +447,7 @@ function AcountPage() {
                 <p>No products found.</p>
             )}
         </ul>
+    </div>
     </div>
             <div className="bg-slate-200">
                 <section className=" lg:pt-[70px] pb-12 lg:pb-[10px]">
@@ -621,38 +496,7 @@ function AcountPage() {
                                     </p>
                                 </div>
                             </div>
-                            {/* Card 3 */}
-                            <div
-                                id="dashboard"
-                                className="w-full md:w-1/2 lg:w-1/3 px-4"
-                                onClick={SellerDashboardPageClick}
-                            >
-                                <div className="p-10 md:px-7 xl:px-10 rounded-[20px] bg-white shadow-md hover:shadow-lg mb-8">
-                                    <div className="w-[70px] h-[70px] flex  rounded-2xl mb-8">
-                                        <img
-                                            src="https://img.icons8.com/?size=100&id=88300&format=png&color=000000"
-                                            alt="Seller Dashboard"
-                                        />
-                                    </div>
-                                    <h4 className="font-semibold text-xl text-dark mb-3">
-                                        Seller Dashboard
-                                    </h4>
-                                    <p className="text-body-color">
-                                        Manage sales, track performance effortlessly.
-                                    </p>
-                                </div>
-                            </div>
-                            {/* Card 4 */}
-                            {/* <div id="dashboard" class="w-full md:w-1/2 lg:w-1/3 px-4" onClick="AddPageClick()">
-                  <div class="p-10 md:px-7 xl:px-10 rounded-[20px] bg-white shadow-md hover:shadow-lg mb-8">
-                      <div class="w-[70px] h-[70px] flex items-center justify-center rounded-2xl mb-8">
-                          <img src="https://img.icons8.com/?size=100&id=37839&format=png&color=000000"
-                              alt="Seller Dashboard">
-                      </div>
-                      <h4 class="font-semibold text-xl text-dark mb-3">Add Products</h4>
-                      <p class="text-body-color">Add products, boost sales, simplify management</p>
-                  </div>
-              </div> */}
+
                             {/* Card 5 */}
                             <div
                                 className="w-full md:w-1/2 lg:w-1/3 px-4"
@@ -724,7 +568,7 @@ function AcountPage() {
                                         Contact Us
                                     </h4>
                                     <p className="text-body-color">
-                                        Contact our customer service via phone or chat
+                                        Customer service via phone or chat
                                     </p>
                                 </div>
                             </div>
@@ -736,4 +580,4 @@ function AcountPage() {
 
     )
 }
-export default AcountPage
+export default BuyerAccount

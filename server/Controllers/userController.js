@@ -612,7 +612,6 @@ exports.CartView = async (req, res) => {
         return;
     }
 };
-
 exports.addWishList = async (req, res) => {
     try {
         const { userId, productId, action } = req.body;  // `action` will be either 'add' or 'remove'
@@ -622,7 +621,7 @@ exports.addWishList = async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User not found!",
+                message: "User  not found!",
             });
         }
 
@@ -659,7 +658,7 @@ exports.addWishList = async (req, res) => {
                 success: true,
                 message: "Item successfully added to the wishlist.",
             });
-        } else if (action === 'remove') {
+        } else if (action === 'remove') { // Corrected from `add` to `action`
             // Find and remove the product from the wishlist
             const wishlistIndex = user.wishlist.findIndex(item => item.productId === productId);
             if (wishlistIndex === -1) {
@@ -670,7 +669,7 @@ exports.addWishList = async (req, res) => {
             }
 
             // Remove the item or mark it as not in wishlist
-            user.wishlist[wishlistIndex].isInWishlist = false;  // Mark as removed
+            user.wishlist.splice(wishlistIndex, 1); // Remove the item from the wishlist
             await user.save();
 
             return res.status(200).json({
@@ -1834,6 +1833,62 @@ exports.singleuseraddress = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
+
+exports.gotoCart = async (req, res) => {
+  try {
+    // Extract the user ID from the route parameters
+    const userId = req.params.userId;
+
+    // Validate the userId format
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).send('Invalid user ID format');
+    }
+
+    // Find the user and retrieve their cart items
+    const user = await users
+      .findById(userId)
+      .select('addCart') // Select only the addCart field
+      .populate({
+        path: 'addCart.items.productId', // Populate product details from the 'products' collection
+        model: 'Product', // Ensure to use the correct Product model for the population
+      });
+
+    // Log the result for debugging
+    console.log('User Data:', JSON.stringify(user, null, 2));
+
+    // Check if the user exists and has cart items
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+    if (!user.addCart || user.addCart.length === 0 || !user.addCart[0].items || user.addCart[0].items.length === 0) {
+      return res.status(404).send('No cart items found for this user');
+    }
+
+    // Extract the first addCart entry and its items
+    const cartItems = user.addCart[0].items;
+
+    // Log cart items for debugging
+    console.log('Cart Items:', JSON.stringify(cartItems, null, 2));
+
+    // Return the cart products
+    res.json({ cartItems });
+  } catch (error) {
+    // Log error details for debugging
+    console.error('Error:', error.message);
+    res.status(500).send(`Failed to load cart: ${error.message}`);
+  }
+};
+
+
+  
+
+
+
+
+
+
+
+  
 
 
 

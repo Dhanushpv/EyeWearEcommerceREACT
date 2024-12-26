@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+
 function SingleChekout() {
     let params = new URLSearchParams(window.location.search);
     let id = params.get('id');
@@ -57,7 +61,15 @@ function SingleChekout() {
                     throw new Error('Invalid response format: Unable to extract products array');
                 }
             }
-
+            const showToast = (message, type) => {
+                if (type === 'success') {
+                    toast.success(message);
+                } else if (type === 'error') {
+                    toast.error(message);
+                } else {
+                    toast(message);
+                }
+            };
 
             const validProducts = products.filter(products =>
                 data.some(apiProduct => apiProduct._id === products)
@@ -74,7 +86,7 @@ function SingleChekout() {
 
             // Proceed with the order if all products are valid
             const response = await axios.post(`http://localhost:3000/orderCart/${id}`, { products: datapp });
-            alert('Order placed successfully!');
+            showToast('Order placed successfully!', 'success');
             console.log("response",response)
         } catch (error) {
             console.error('Error proceeding to buy:', error.message || error);
@@ -120,7 +132,9 @@ function SingleChekout() {
     }
 
     return (
+        
         <div className="max-w-5xl mx-auto p-4">
+            <ToastContainer />
             <header className="flex items-center justify-between py-4">
                 <div className="flex items-center">
                     <div className="text-center">

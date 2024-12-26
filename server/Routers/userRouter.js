@@ -53,6 +53,9 @@ router.get('/singleuserCartitems/:userId',userController.singleuserCartitems);
 router.get('/singleuserwishlist/:userId',userController.singleuserwishlist);
 router.get('/singleuserbuyNow/:userId',userController.singleuserbuyNow);
 router.get('/singleuseraddress/:userId',userController.singleuseraddress);
+router.get('/gotoCart/:userId',userController.gotoCart);
+
+
 
 
 

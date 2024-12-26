@@ -93,7 +93,8 @@ function Seller() {
         navigate(`/AddtoCartPage?productId=${productId}&userId=${id}&price=${price}&quantity=${quantity}`);
     };
 
-    let isRequestInProgress = false;
+
+    let isRequestInProgress = false; // Global variable to prevent multiple simultaneous API calls
 
     async function wishList(productId, title, price) {
         if (isRequestInProgress) return; // Prevent multiple API calls
@@ -102,7 +103,7 @@ function Seller() {
         try {
             console.log("Toggling wishlist:", productId, title, price);
     
-            // Extract userId and token from the query parameters
+            // Extract userId and token_key from the query parameters
             const params = new URLSearchParams(window.location.search);
             const userId = params.get('id');
             const token_key = params.get('login');
@@ -121,23 +122,24 @@ function Seller() {
             }
     
             // Check the current status of the product in the wishlist
-            const statusResponse = await axios.get(
-                'http://localhost:3000/status',
-                {
-                    params: {
-                        userId,
-                        productId,
-                    },
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
+            console.log('Checking wishlist status...');
+            const statusResponse = await axios.get('http://localhost:3000/status', {
+                params: {
+                    userId,
+                    productId,
+                },
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
     
             // Handle response based on wishlist status
-            const isInWishlist = statusResponse.data.isInWishlist;
+            const isInWishlist = statusResponse.data.isInWishlist ?? false; // Default to false if undefined
+            console.log('Current wishlist status:', isInWishlist);
     
-            // Make the API call to either add or remove the product from wishlist
+            // Make the API call to either add or remove the product from the wishlist
+            const action = isInWishlist ? 'remove' : 'add';
+            console.log(`Sending request to ${action} item to/from wishlist...`);
             const actionResponse = await axios.post(
                 'http://localhost:3000/addtowishlist',
                 {
@@ -145,12 +147,12 @@ function Seller() {
                     title,
                     price,
                     userId,
-                    action: isInWishlist ? 'remove' : 'add', // Determine whether to add or remove
+                    action,
                 },
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`, // Include token
+                        'Authorization': `Bearer ${token}`, // Include token
                     },
                 }
             );
@@ -165,15 +167,21 @@ function Seller() {
                 if (icon) {
                     icon.style.color = isInWishlist ? 'initial' : 'red'; // Red if added to wishlist
                     icon.title = isInWishlist ? 'Add to Wishlist' : 'Added to Wishlist'; // Tooltip
+                    console.log(`Updated icon color to: ${icon.style.color}`);
+                } else {
+                    console.error(`Wishlist icon not found for product: ${productId}`);
                 }
+            } else {
+                alert(actionResponse.data.message || 'Failed to update wishlist. Please try again.');
             }
         } catch (error) {
             console.error('Error toggling wishlist:', error);
-            alert(error.response?.data?.message || 'Error toggling item in wishlist.');
+            alert(error.response?.data?.message || 'An error occurred while updating the wishlist.');
         } finally {
-            isRequestInProgress = false;
+            isRequestInProgress = false; // Allow new API calls
         }
     }
+    
     
 
     
@@ -368,6 +376,9 @@ function Seller() {
         }
     };
     
+    const CartClick = ()=>{
+        navigate(`/GoToCart?login=${token_key}&id=${id}`)
+    }
 
     
 
@@ -481,15 +492,9 @@ function Seller() {
                                     <span onClick={MyAcount} className="dropdown-item">
                                         Your Account
                                     </span>
-                                    <span onClick={() => alert('Your Orders clicked')} className="dropdown-item">
-                                        Your Orders
-                                    </span>
-                                    <span onClick={() => alert('Your Wish List clicked')} className="dropdown-item">
-                                        Your Wish List
-                                    </span>
-                                    <span onClick={() => alert('Your Seller Account clicked')} className="dropdown-item">
-                                        Your Seller Account                                    </span>
-                                    <span onClick={() => alert('Memberships clicked')} className="dropdown-item">
+                                   
+                                   
+                                    <span  className="dropdown-item">
                                         Memberships & Subscriptions
                                     </span>
 
@@ -517,7 +522,7 @@ function Seller() {
                             </div>
                             <div className="loginSection"></div>
                             <div className="pt-2">
-                        <img className="w-10 h-10" src="https://img.icons8.com/?size=100&id=106886&format=png&color=000000" alt="" />
+                            <div onClick={CartClick} className="px-3"><img className="w-24 h-24" style={{ width: "30px", height:"30px" }} src="https://img.icons8.com/?size=100&id=NUcpUMIcTSZ3&format=png&color=000000" alt="" /></div>
                     </div>
                         </div>
                     </div>
@@ -561,95 +566,7 @@ function Seller() {
             )}
         </ul>
     </div>
-            {/* <nav className="pb-3">
-                <div className="bg-gray-800 text-white text-center font-light">
-                    FREE SHIPPING ON ORDERS OVER $75
-                </div>
-                <div className="flex justify-evenly items-center pt-3">
-                    <div className="text-center">
-                        <span className="logo_sub1">NO</span>
-                        <span className="logo_sub1">VA</span>
-                    </div>
-                    <div className="flex w-full md:w-auto items-center px-5">
-                        <div className="px-3 relative">
-                            <span className="hover:underline cursor-pointer">Eyeglasses</span>
-                            <div className="offcanvas-menu">
-                                <div id="gender_category">asdfgh</div>
-                            </div>
-                        </div>
-                        <div className="px-3 relative">
-                            <span className="hover:underline cursor-pointer">Screen Glasses</span>
-                            <div className="offcanvas-menu">All Products Submenu</div>
-                        </div>
-                        <div className="px-3 relative">
-                            <span className="hover:underline cursor-pointer">Kids Glasses</span>
-                            <div className="offcanvas-menu">New Arrivals Submenu</div>
-                        </div>
-                        <div className="px-3 relative">
-                            <span className="hover:underline cursor-pointer">Contact Lenses</span>
-                            <div className="offcanvas-menu">Sunglasses Submenu</div>
-                        </div>
-                        <div className="px-3 relative">
-                            <span className="hover:underline cursor-pointer">Sunglasses</span>
-                            <div className="offcanvas-menu">Eyeglasses Submenu</div>
-                        </div>
-                        <div className="px-3 relative">
-                            <span className="hover:underline cursor-pointer">About</span>
-                            <div className="offcanvas-menu">About Submenu</div>
-                        </div>
-                        <div className="px-3 relative">
-                            <span className="hover:underline cursor-pointer">Gift Card</span>
-                            <div className="offcanvas-menu">Gift Card Submenu</div>
-                        </div>
-                    </div>
-                    {user && (
-                        <div className="profile">
-                            <div className="dropdown">
-                                <button className="dropbtn" aria-haspopup="true" role="button">
-                                    <span className="text-break"><strong>Hello,</strong> {user.name}</span><br />
-                                    <span><strong>Account & Lists</strong></span>
-                                </button>
-                                <div className="dropdown-content text-left">
-                                    <span onClick={MyAcount} className="dropdown-item">
-                                        Your Account
-                                    </span>
-                                    <span onClick={() => alert('Your Orders clicked')} className="dropdown-item">
-                                        Your Orders
-                                    </span>
-                                    <span onClick={() => alert('Your Wish List clicked')} className="dropdown-item">
-                                        Your Wish List
-                                    </span>
-                                    <span onClick={() => alert('Your Seller Account clicked')} className="dropdown-item">
-                                        Your Seller Account                                    </span>
-                                    <span onClick={() => alert('Memberships clicked')} className="dropdown-item">
-                                        Memberships & Subscriptions
-                                    </span>
-
-                                    <div className="p-3 loginSection">
-                                        <button
-                                            className="btn btn-danger"
-                                            onClick={() => {
-                                                // Clear the token from localStorage
-                                                let params = new URLSearchParams(window.location.search);
-                                                let token_key = params.get('login');
-                                                localStorage.removeItem(token_key);
-
-                                                // Navigate to the login page
-                                                navigate('/');
-                                            }}
-                                        >
-                                            Logout
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    <div className="pt-2">
-                        <img className="w-10 h-10" src="https://img.icons8.com/?size=100&id=106886&format=png&color=000000" alt="" />
-                    </div>
-                </div>
-            </nav> */}
+           
 
             {/* Carousel Section */}
             <div>

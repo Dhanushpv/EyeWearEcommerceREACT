@@ -35,6 +35,10 @@ import OrderItems from './Components/Oderspage/Oderspage';
 import ResetPassword from './Components/ResetPassword/ResetPassword';
 import PasswordReset from './Components/PasswordReset/PasswordReset';
 import Userdetails from './Components/Userdetails/Userdetails';
+import BuyerAccount from './Components/BuyerAccount/BuyerAccount';
+import Mebership from './Components/Mebership/Mebership';
+import Payment from './Components/Payment/Payment';
+import GoToCart from './Components/GoToCart/GoToCart';
 
 
 // import './App.css'
@@ -73,6 +77,14 @@ function App() {
       <Route path={'/ResetPassword'} exact element={<ResetPassword />} />
       <Route path={'/forgotPassword'} exact element={<PasswordReset />} />
       <Route path={'/Userdetails'} exact element={<Userdetails />} />
+      <Route path={'/BuyerAccount'} exact element={<BuyerAccount />} />
+      <Route path={'/Mebership'} exact element={<Mebership />} />
+      <Route path={'/Payment'} exact element={<Payment />} />
+      <Route path={'/GoToCart'} exact element={<GoToCart />} />
+
+
+
+
       
 
 

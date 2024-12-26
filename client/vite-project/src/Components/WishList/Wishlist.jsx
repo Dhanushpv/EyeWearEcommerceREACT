@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 
 function WishList() {
     const [allProducts, setAllProducts] = useState([]);
     const [matchedItems, setMatchedItems] = useState([]);
     const [errorMessage, setErrorMessage] = useState("");
+    const navigate = useNavigate();
 
     let params = new URLSearchParams(window.location.search);
     let id = params.get("id");
@@ -109,12 +111,28 @@ function WishList() {
           alert("Failed to remove item. Please try again later.");
       }
     
-    
- 
-    
- 
-  
+
   };
+
+  let SingleView = (productId) => {
+    let params = new URLSearchParams(window.location.search);
+    let token_key = params.get('login');
+    let userId = params.get('id')
+    let token = localStorage.getItem(token_key);
+
+
+    navigate(`/SingleView/${productId}`, {
+        state: {
+            id: productId,
+            userId,  // Pass the user ID here
+            token
+        }
+    });
+};
+
+let handleSingleView = (productId) => {
+    SingleView(productId);
+};
 
     return (
         <div>
@@ -194,15 +212,7 @@ function WishList() {
                   </span>
                 </li>
               </ul>
-              <div className="mt-auto border-t border-slate-800 px-2 py-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 overflow-hidden rounded-full"><img className="rounded-full h-full w-full" src="https://picsum.photos/200" alt="" /></div>
-                  <div>
-                    <p className="text-sm text-white">Dadda Hicham</p>
-                    <p className="text-xs text-slate-400">creator</p>
-                  </div>
-                </div>
-              </div>
+              
 
             </div>}
                 </div>
@@ -215,9 +225,9 @@ function WishList() {
                                 {matchedItems.length > 0 ? (
                                     matchedItems.map((item, index) => (
                                         <div key={index} className="w-1/4 md:w-1/2 lg:w-1/3 px-4 pb-6 mb-6">
-                                            <div className="relative flex flex-col rounded-xl bg-white shadow-md">
+                                            <div className="relative flex flex-col rounded-xl bg-white shadow-md" onClick={() => handleSingleView(item._id)}>
                                                 <div className="relative mx-4 -mt-6 h-40 overflow-hidden rounded-xl bg-blue-gray-500 bg-clip-border text-white shadow-lg shadow-blue-gray-500/40 bg-gradient-to-r from-blue-500 to-blue-600">
-                                                <img
+                                                <img onClick={() => handleSingleView(item._id)}
                                                       src={item.images && item.images[0] ? `http://localhost:3000/${item.images[0]?.url}` : 'fallback_image_url'} 
                                                       alt={item.title || "Product"}
                                                       className="w-full h-full object-cover"
